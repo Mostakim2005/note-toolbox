@@ -1,4 +1,4 @@
-import { createSpan, MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
+import { MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
 import type NoteToolboxPlugin from "./main";
 
 const DROPDOWN_PATTERN = /\?\[([^\]]+)\]/g;
@@ -39,7 +39,10 @@ export class InlineDropdownProcessor {
             if (!DROPDOWN_PATTERN.test(text)) continue;
             DROPDOWN_PATTERN.lastIndex = 0;
 
-            const container = createSpan({
+            const parent = textNode.parentElement;
+            if (!parent) continue;
+
+            const container = parent.createSpan({
                 cls: "note-toolbox-inline-container",
             });
 
