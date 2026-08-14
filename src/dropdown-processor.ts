@@ -3,6 +3,24 @@ import type NoteToolboxPlugin from "./main";
 
 const DROPDOWN_PATTERN = /\?\[([^\]]+)\]/g;
 
+type FrontmatterRecord = Record<string, unknown>;
+
+function isFrontmatterRecord(value: unknown): value is FrontmatterRecord {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function setFrontmatterValue(
+    frontmatter: unknown,
+    fieldName: string,
+    value: string,
+): void {
+    if (!isFrontmatterRecord(frontmatter)) {
+        throw new Error("Frontmatter is not a valid object.");
+    }
+
+    frontmatter[fieldName] = value;
+}
+
 export class InlineDropdownProcessor {
     constructor(private readonly plugin: NoteToolboxPlugin) {}
 
@@ -11,7 +29,7 @@ export class InlineDropdownProcessor {
         if (!file) return;
 
         const metadata = this.plugin.app.metadataCache.getFileCache(file);
-        const frontmatter = metadata?.frontmatter ?? {};
+        const frontmatter: FrontmatterRecord = metadata?.frontmatter ?? {};
         const textNodes = this.collectTextNodes(element);
 
         for (const textNode of textNodes) {
@@ -41,7 +59,13 @@ export class InlineDropdownProcessor {
                     if (!options?.length) {
                         fragment.append(match[0]);
                     } else {
-                        this.createDropdown(fragment, file, listName, options, frontmatter);
+                        this.createDropdown(
+                            fragment,
+                            file,
+                            listName,
+                            options,
+                            frontmatter,
+                        );
                     }
 
                     lastIndex = match.index + match[0].length;
@@ -49,6 +73,7 @@ export class InlineDropdownProcessor {
 
                 fragment.append(text.slice(lastIndex));
             });
+
             textNode.parentNode?.replaceChild(fragment, textNode);
         }
     }
@@ -66,7 +91,11 @@ export class InlineDropdownProcessor {
         while ((node = walker.nextNode())) {
             const textNode = node as Text;
             const parent = textNode.parentElement;
-            if (!parent || parent.closest("code, pre, textarea, script, style")) continue;
+
+            if (!parent || parent.closest("code, pre, textarea, script, style")) {
+                continue;
+            }
+
             nodes.push(textNode);
         }
 
@@ -78,25 +107,29 @@ export class InlineDropdownProcessor {
         file: TFile,
         listName: string,
         options: string[],
-        frontmatter: Record<string, unknown>,
-    ): HTMLSelectElement {
+        frontmatter: FrontmatterRecord,
+    ): void {
         const select = fragment.createEl("select", {
             cls: "note-toolbox-dropdown",
         });
+
         select.setAttribute("aria-label", `${listName} dropdown`);
 
         const fieldName = `dropdown_${listName}`;
-        const currentValue = typeof frontmatter[fieldName] === "string"
-            ? frontmatter[fieldName]
-            : "";
+        const storedValue = frontmatter[fieldName];
+        const currentValue = typeof storedValue === "string" ? storedValue : "";
 
-        const placeholder = select.createEl("option", { text: "Choose…" });
+        const placeholder = select.createEl("option", {
+            text: "Choose…",
+        });
         placeholder.value = "";
         placeholder.disabled = true;
         placeholder.selected = !currentValue;
 
         for (const option of options) {
-            const optionEl = select.createEl("option", { text: option });
+            const optionEl = select.createEl("option", {
+                text: option,
+            });
             optionEl.value = option;
             optionEl.selected = option === currentValue;
         }
@@ -104,8 +137,6 @@ export class InlineDropdownProcessor {
         select.addEventListener("change", () => {
             void this.updateDropdown(file, fieldName, listName, select.value);
         });
-
-        return select;
     }
 
     private async updateDropdown(
@@ -117,8 +148,8 @@ export class InlineDropdownProcessor {
         try {
             await this.plugin.app.fileManager.processFrontMatter(
                 file,
-                (frontmatter: Record<string, unknown>) => {
-                    frontmatter[fieldName] = value;
+                (frontmatter: unknown) => {
+                    setFrontmatterValue(frontmatter, fieldName, value);
                 },
             );
 

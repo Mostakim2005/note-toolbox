@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type NoteToolboxPlugin from "./main";
 
 export interface NoteToolboxSettings {
@@ -50,43 +50,60 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 
     display(): void {
         const { containerEl } = this;
+
         containerEl.empty();
         containerEl.addClass("note-toolbox-settings");
 
-        new Setting(containerEl).setName("Note toolbox").setHeading();
+        new Setting(containerEl)
+            .setName("Note toolbox")
+            .setHeading();
+
         containerEl.createEl("p", {
             text: "Manage the dropdown lists used by ?[listName] inline dropdowns.",
             cls: "setting-item-description",
         });
 
         new Setting(containerEl)
-            .setName("Import / export JSON")
+            .setName("Import/export JSON")
             .setDesc("Advanced users can edit all dropdown lists as JSON.")
             .addTextArea((text) => {
-                text.setValue(JSON.stringify(this.plugin.settings.dropdownLists, null, 2));
+                text.setValue(
+                    JSON.stringify(this.plugin.settings.dropdownLists, null, 2),
+                );
                 text.inputEl.rows = 10;
                 text.inputEl.addClass("note-toolbox-settings-json");
+
                 text.onChange(async (value) => {
                     try {
                         const parsed: unknown = JSON.parse(value);
-                        const normalized = normalizeSettings({ dropdownLists: parsed });
+                        const normalized = normalizeSettings({
+                            dropdownLists: parsed,
+                        });
 
-                        if (Object.keys(normalized.dropdownLists).length === 0 && value.trim() !== "{}") {
+                        if (
+                            Object.keys(normalized.dropdownLists).length === 0 &&
+                            value.trim() !== "{}"
+                        ) {
                             throw new Error("No valid dropdown lists were found.");
                         }
 
                         this.plugin.settings.dropdownLists = normalized.dropdownLists;
                         await this.plugin.savePluginSettings();
                     } catch (error) {
-                        console.error("Note Toolbox: invalid dropdown JSON", error);
+                        console.error(
+                            "Note Toolbox: invalid dropdown JSON",
+                            error,
+                        );
                     }
                 });
             });
 
-        new Setting(containerEl).setName("Dropdown lists").setHeading();
+        new Setting(containerEl)
+            .setName("Dropdown lists")
+            .setHeading();
 
-        const listNames = Object.keys(this.plugin.settings.dropdownLists).sort((a, b) =>
-            a.localeCompare(b),
+        const listNames = Object.keys(this.plugin.settings.dropdownLists).sort(
+            (a, b) => a.localeCompare(b),
         );
 
         if (listNames.length === 0) {
@@ -102,22 +119,36 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Add dropdown list")
-            .setDesc("Create a named list such as status, priority, or bookstatus.")
+            .setDesc(
+                "Create a named list such as status, priority, or bookstatus.",
+            )
             .addText((text) => text.setPlaceholder("List name"))
             .addButton((button) => {
                 button.setButtonText("Add");
                 button.setCta();
+
                 button.onClick(async () => {
-                    const setting = button.buttonEl.parentElement?.querySelector("input") as HTMLInputElement | null;
-                    const name = setting?.value.trim() ?? "";
+                    const input = button.buttonEl.parentElement?.querySelector(
+                        "input",
+                    );
+
+                    const name =
+                        input instanceof HTMLInputElement
+                            ? input.value.trim()
+                            : "";
+
                     if (!name) return;
 
                     if (this.plugin.settings.dropdownLists[name]) {
-                        containerEl.createEl("p", { text: `A list named “${name}” already exists.` });
+                        new Notice(`A list named “${name}” already exists.`);
                         return;
                     }
 
-                    this.plugin.settings.dropdownLists[name] = ["Option 1", "Option 2"];
+                    this.plugin.settings.dropdownLists[name] = [
+                        "Option 1",
+                        "Option 2",
+                    ];
+
                     await this.plugin.savePluginSettings();
                     this.display();
                 });
@@ -126,36 +157,50 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 
     private renderList(containerEl: HTMLElement, name: string): void {
         const options = this.plugin.settings.dropdownLists[name] ?? [];
-        const section = containerEl.createDiv({ cls: "note-toolbox-settings-list" });
+        const section = containerEl.createDiv({
+            cls: "note-toolbox-settings-list",
+        });
 
-        new Setting(section).setName(name).setHeading();
+        new Setting(section)
+            .setName(name)
+            .setHeading();
 
         new Setting(section)
             .setName("Options")
             .setDesc("One option per line.")
             .addTextArea((text) => {
                 text.setValue(options.join("\n"));
-                text.inputEl.rows = Math.max(3, Math.min(8, options.length + 1));
+                text.inputEl.rows = Math.max(
+                    3,
+                    Math.min(8, options.length + 1),
+                );
+
                 text.onChange(async (value) => {
-                    const next = [...new Set(
-                        value.split("\n").map((option) => option.trim()).filter(Boolean),
-                    )];
+                    const next = [
+                        ...new Set(
+                            value
+                                .split("\n")
+                                .map((option) => option.trim())
+                                .filter(Boolean),
+                        ),
+                    ];
 
                     if (next.length === 0) return;
+
                     this.plugin.settings.dropdownLists[name] = next;
                     await this.plugin.savePluginSettings();
                 });
             });
 
-        new Setting(section)
-            .addButton((button) => {
-                button.setButtonText("Delete list");
-                button.setWarning();
-                button.onClick(async () => {
-                    delete this.plugin.settings.dropdownLists[name];
-                    await this.plugin.savePluginSettings();
-                    this.display();
-                });
+        new Setting(section).addButton((button) => {
+            button.setButtonText("Delete list");
+            button.setWarning();
+
+            button.onClick(async () => {
+                delete this.plugin.settings.dropdownLists[name];
+                await this.plugin.savePluginSettings();
+                this.display();
             });
+        });
     }
 }
