@@ -2,7 +2,7 @@
   "id": "note-toolbox",
   "name": "Note Toolbox",
   "version": "1.0.0",
-  "minAppVersion": "1.1.0",
+  "minAppVersion": "1.7.2",
   "description": "Fix LaTeX, multi‑select files, and insert dropdowns.",
   "author": "Mostakim DeepSeek",
   "isDesktopOnly": false
