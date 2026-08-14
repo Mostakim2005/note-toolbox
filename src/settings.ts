@@ -55,11 +55,11 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
         containerEl.addClass("note-toolbox-settings");
 
         new Setting(containerEl)
-            .setName("Note toolbox")
+            .setName("Dropdown lists")
             .setHeading();
 
         containerEl.createEl("p", {
-            text: "Manage the dropdown lists used by ?[listName] inline dropdowns.",
+            text: "Manage the dropdown lists used by ?[listname] inline dropdowns.",
             cls: "setting-item-description",
         });
 
