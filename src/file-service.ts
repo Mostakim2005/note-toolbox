@@ -1,4 +1,4 @@
-import { App, normalizePath, Notice, TFile } from "obsidian";
+import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "bmp", "webp", "avif"]);
 
@@ -41,7 +41,7 @@ export class FileService {
             ? cleanBaseName
             : `${cleanBaseName}.${extension}`;
 
-        const parentPath = file.parent.path;
+        const parentPath = file.parent?.path ?? "";
         const newPath = normalizePath(parentPath ? `${parentPath}/${finalName}` : finalName);
 
         await this.ensurePathAvailable(newPath, file.path);
@@ -53,24 +53,23 @@ export class FileService {
         if (!cleanBaseName) throw new Error("Base name cannot be empty.");
 
         const plannedPaths = new Set<string>();
+        const plan: Array<{ file: TFile; newPath: string }> = [];
 
-        for (let index = 0; index < files.length; index++) {
-            const file = files[index];
+        for (const [index, file] of files.entries()) {
             const newName = `${cleanBaseName} ${index + 1}.${file.extension}`;
-            const newPath = normalizePath(file.parent.path ? `${file.parent.path}/${newName}` : newName);
+            const parentPath = file.parent?.path ?? "";
+            const newPath = normalizePath(parentPath ? `${parentPath}/${newName}` : newName);
 
             if (plannedPaths.has(newPath) || (newPath !== file.path && this.app.vault.getAbstractFileByPath(newPath))) {
                 throw new Error(`A file already exists at ${newPath}.`);
             }
 
             plannedPaths.add(newPath);
+            plan.push({ file, newPath });
         }
 
-        for (let index = 0; index < files.length; index++) {
-            const file = files[index];
-            const newName = `${cleanBaseName} ${index + 1}.${file.extension}`;
-            const newPath = normalizePath(file.parent.path ? `${file.parent.path}/${newName}` : newName);
-            await this.app.vault.rename(file, newPath);
+        for (const item of plan) {
+            await this.app.vault.rename(item.file, item.newPath);
         }
     }
 
@@ -81,21 +80,22 @@ export class FileService {
         const existing = this.app.vault.getAbstractFileByPath(folderPath);
         if (!existing) {
             await this.app.vault.createFolder(folderPath);
-        } else if (!("children" in existing)) {
+        } else if (!(existing instanceof TFolder)) {
             throw new Error("The destination path is a file, not a folder.");
         }
 
-        const destinations = files.map((file) => normalizePath(`${folderPath}/${file.name}`));
+        const plan: Array<{ file: TFile; destination: string }> = [];
 
-        for (let index = 0; index < files.length; index++) {
-            const destination = destinations[index];
-            if (destination !== files[index].path && this.app.vault.getAbstractFileByPath(destination)) {
+        for (const file of files) {
+            const destination = normalizePath(`${folderPath}/${file.name}`);
+            if (destination !== file.path && this.app.vault.getAbstractFileByPath(destination)) {
                 throw new Error(`A file already exists at ${destination}.`);
             }
+            plan.push({ file, destination });
         }
 
-        for (let index = 0; index < files.length; index++) {
-            await this.app.vault.rename(files[index], destinations[index]);
+        for (const item of plan) {
+            await this.app.vault.rename(item.file, item.destination);
         }
     }
 
@@ -109,8 +109,14 @@ export class FileService {
             ? destinationName
             : `${destinationName}.md`;
 
+        const firstFile = markdownFiles[0];
+        if (!firstFile) {
+            throw new Error("Select at least two Markdown notes.");
+        }
+
+        const parentPath = firstFile.parent?.path ?? "";
         const destinationPath = normalizePath(
-            markdownFiles[0].parent.path ? `${markdownFiles[0].parent.path}/${name}` : name,
+            parentPath ? `${parentPath}/${name}` : name,
         );
 
         if (this.app.vault.getAbstractFileByPath(destinationPath)) {

@@ -28,7 +28,14 @@ export class InlineDropdownProcessor {
             while ((match = DROPDOWN_PATTERN.exec(text)) !== null) {
                 fragment.append(text.slice(lastIndex, match.index));
 
-                const listName = match[1].trim();
+                const rawListName = match[1];
+                if (rawListName === undefined) {
+                    fragment.append(match[0]);
+                    lastIndex = match.index + match[0].length;
+                    continue;
+                }
+
+                const listName = rawListName.trim();
                 const options = this.plugin.settings.dropdownLists[listName];
 
                 if (!options?.length) {

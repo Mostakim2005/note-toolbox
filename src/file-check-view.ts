@@ -171,7 +171,8 @@ export class FileCheckView extends ItemView {
 
         const preview = item.createDiv({ cls: "note-toolbox-preview" });
         if (isImageFile(file)) {
-            const image = preview.createEl("img", { alt: file.name });
+            const image = preview.createEl("img");
+            image.alt = file.name;
             image.src = this.app.vault.getResourcePath(file);
         } else {
             preview.createSpan({ text: file.extension === "md" ? "MD" : file.extension.toUpperCase() || "FILE" });
@@ -223,9 +224,10 @@ export class FileCheckView extends ItemView {
         const folders = this.folderFilter;
 
         return this.fileService.getFiles().filter((file) => {
+            const parentPath = file.parent?.path ?? "";
             const inFolder = [...folders].some((folder) => {
-                if (folder === "") return file.parent.path === "";
-                return file.parent.path === folder || file.parent.path.startsWith(`${folder}/`);
+                if (folder === "") return parentPath === "";
+                return parentPath === folder || parentPath.startsWith(`${folder}/`);
             });
 
             if (!inFolder) return false;
@@ -241,7 +243,9 @@ export class FileCheckView extends ItemView {
 
     private getAllFolders(): string[] {
         const folders = new Set<string>([""]);
-        for (const file of this.fileService.getFiles()) folders.add(file.parent.path);
+        for (const file of this.fileService.getFiles()) {
+            folders.add(file.parent?.path ?? "");
+        }
         return [...folders].sort((a, b) => a.localeCompare(b));
     }
 
@@ -301,6 +305,8 @@ export class FileCheckView extends ItemView {
         }
 
         const file = files[0];
+        if (!file) return;
+
         const base = file.basename;
         new InputModal(this.app, "Rename file", "New name", base, async (newName) => {
             try {
