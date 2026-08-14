@@ -1,4 +1,4 @@
-import { createFragment, MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
+import { createSpan, MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
 import type NoteToolboxPlugin from "./main";
 
 const DROPDOWN_PATTERN = /\?\[([^\]]+)\]/g;
@@ -39,42 +39,43 @@ export class InlineDropdownProcessor {
             if (!DROPDOWN_PATTERN.test(text)) continue;
             DROPDOWN_PATTERN.lastIndex = 0;
 
-            const fragment = createFragment((fragment) => {
-                let lastIndex = 0;
-                let match: RegExpExecArray | null;
-
-                while ((match = DROPDOWN_PATTERN.exec(text)) !== null) {
-                    fragment.append(text.slice(lastIndex, match.index));
-
-                    const rawListName = match[1];
-                    if (rawListName === undefined) {
-                        fragment.append(match[0]);
-                        lastIndex = match.index + match[0].length;
-                        continue;
-                    }
-
-                    const listName = rawListName.trim();
-                    const options = this.plugin.settings.dropdownLists[listName];
-
-                    if (!options?.length) {
-                        fragment.append(match[0]);
-                    } else {
-                        this.createDropdown(
-                            fragment,
-                            file,
-                            listName,
-                            options,
-                            frontmatter,
-                        );
-                    }
-
-                    lastIndex = match.index + match[0].length;
-                }
-
-                fragment.append(text.slice(lastIndex));
+            const container = createSpan({
+                cls: "note-toolbox-inline-container",
             });
 
-            textNode.parentNode?.replaceChild(fragment, textNode);
+            let lastIndex = 0;
+            let match: RegExpExecArray | null;
+
+            while ((match = DROPDOWN_PATTERN.exec(text)) !== null) {
+                container.append(text.slice(lastIndex, match.index));
+
+                const rawListName = match[1];
+                if (rawListName === undefined) {
+                    container.append(match[0]);
+                    lastIndex = match.index + match[0].length;
+                    continue;
+                }
+
+                const listName = rawListName.trim();
+                const options = this.plugin.settings.dropdownLists[listName];
+
+                if (!options?.length) {
+                    container.append(match[0]);
+                } else {
+                    this.createDropdown(
+                        container,
+                        file,
+                        listName,
+                        options,
+                        frontmatter,
+                    );
+                }
+
+                lastIndex = match.index + match[0].length;
+            }
+
+            container.append(text.slice(lastIndex));
+            textNode.parentNode?.replaceChild(container, textNode);
         }
     }
 
@@ -103,13 +104,13 @@ export class InlineDropdownProcessor {
     }
 
     private createDropdown(
-        fragment: DocumentFragment,
+        container: HTMLElement,
         file: TFile,
         listName: string,
         options: string[],
         frontmatter: FrontmatterRecord,
     ): void {
-        const select = fragment.createEl("select", {
+        const select = container.createEl("select", {
             cls: "note-toolbox-dropdown",
         });
 
