@@ -28,7 +28,7 @@ export class FileCheckView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "File Multi-Select";
+        return "File multi-select";
     }
 
     getIcon(): string {
@@ -52,7 +52,7 @@ export class FileCheckView extends ItemView {
 
         const header = this.contentEl.createDiv({ cls: "note-toolbox-header" });
         const title = header.createDiv({ cls: "note-toolbox-header-title" });
-        title.createEl("h2", { text: "File Toolbox" });
+        title.createEl("h2", { text: "File toolbox" });
         title.createEl("p", { text: "Select and manage files in your vault." });
 
         this.renderToolbar(header);
@@ -140,7 +140,7 @@ export class FileCheckView extends ItemView {
         if (files.length === 0) {
             const empty = this.listContainer.createDiv({ cls: "note-toolbox-empty" });
             empty.createEl("strong", { text: "No files found" });
-            empty.createEl("span", { text: "Try changing the search or folder filter." });
+            empty.createSpan({ text: "Try changing the search or folder filter." });
             this.updateSelectionSummary();
             return;
         }
@@ -180,9 +180,9 @@ export class FileCheckView extends ItemView {
 
         const details = item.createDiv({ cls: "note-toolbox-file-details" });
         details.createEl("strong", { text: file.name });
-        details.createEl("span", { text: file.path, cls: "note-toolbox-file-path" });
+        details.createSpan({ text: file.path, cls: "note-toolbox-file-path" });
 
-        const info = details.createEl("span", { cls: "note-toolbox-file-info" });
+        const info = details.createSpan({ cls: "note-toolbox-file-info" });
         void this.loadFileInfo(file, info);
 
         item.addEventListener("dblclick", () => {

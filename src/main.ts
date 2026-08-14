@@ -13,7 +13,7 @@ export default class NoteToolboxPlugin extends Plugin {
 
         this.registerView(FILE_CHECK_VIEW_TYPE, (leaf) => new FileCheckView(leaf, this));
 
-        this.addRibbonIcon("checkmark", "Open File Multi-Select", () => {
+        this.addRibbonIcon("checkmark", "Open file multi-select", () => {
             void this.activateFileCheckView();
         });
 
@@ -35,7 +35,7 @@ export default class NoteToolboxPlugin extends Plugin {
             return normalizeSettings(saved);
         } catch (error) {
             console.error("Note Toolbox: failed to load settings", error);
-            new Notice("Note Toolbox settings were invalid. Defaults were restored.");
+            new Notice("Note toolbox settings were invalid. Defaults were restored.");
             return { ...DEFAULT_SETTINGS, dropdownLists: {} };
         }
     }

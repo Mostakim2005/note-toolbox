@@ -53,7 +53,7 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass("note-toolbox-settings");
 
-        containerEl.createEl("h2", { text: "Note Toolbox" });
+        new Setting(containerEl).setName("Note toolbox").setHeading();
         containerEl.createEl("p", {
             text: "Manage the dropdown lists used by ?[listName] inline dropdowns.",
             cls: "setting-item-description",
@@ -83,7 +83,7 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
                 });
             });
 
-        containerEl.createEl("h3", { text: "Dropdown lists" });
+        new Setting(containerEl).setName("Dropdown lists").setHeading();
 
         const listNames = Object.keys(this.plugin.settings.dropdownLists).sort((a, b) =>
             a.localeCompare(b),
@@ -102,7 +102,7 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Add dropdown list")
-            .setDesc("Create a named list such as status, priority, or bookStatus.")
+            .setDesc("Create a named list such as status, priority, or bookstatus.")
             .addText((text) => text.setPlaceholder("List name"))
             .addButton((button) => {
                 button.setButtonText("Add");
@@ -128,7 +128,7 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
         const options = this.plugin.settings.dropdownLists[name] ?? [];
         const section = containerEl.createDiv({ cls: "note-toolbox-settings-list" });
 
-        section.createEl("h4", { text: name });
+        new Setting(section).setName(name).setHeading();
 
         new Setting(section)
             .setName("Options")
