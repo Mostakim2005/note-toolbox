@@ -2,21 +2,24 @@
 
 Visual media manager, universal attachment picker, and inline dropdowns.
 
-## This repo (TS scaffold from Mostakim2005 template)
+## This repo (faithful deep split from the live bundle)
 
-- `src/types.ts` — typed settings surface from the live bundle
+- `src/types.ts` — `NoteToolboxSettings`, `FileCategory`
 - `src/settings.ts` — `DEFAULT_SETTINGS` matching live `data.json` keys
-- `src/main.ts` — typed plugin entry (onload/commands/settings lifecycle) ported from the bundle
+- `src/fuzzy.ts` — helpers: `debounce`, `formatBytes`, `formatDuration`, `getCategory`
+- `src/media.ts` — `MediaService` (folders, linked paths, `getValidFiles` filtering/sorting, rename/move)
+- `src/dropdown.ts` — `InlineDropdownProcessor` (`?[listname]`, `?[listname|val]`, frontmatter)
+- `src/main.ts` — plugin entry (onload/commands/settings lifecycle)
 
-## Parity checklist (next split steps)
+## Parity checklist
 
-- [ ] `MediaService` (index/cache, getCategory, linked cache)
-- [ ] `MediaToolboxModal` (grid/list, categories, folder selector)
+- [x] Entry, 2 commands, ribbon, aliases, vault events, browser events
+- [ ] `MediaToolboxModal` (grid/list, categories, folder selector, search)
 - [ ] `DropdownManagerUI` / `DropdownManagerModal`
-- [ ] `InlineDropdownProcessor` (`?[listname]` post-processor)
-- [ ] `NoteToolboxSettingTab` (full settings UI)
-- [ ] `styles.css` — live glassmorphism, copied verbatim (36,649 bytes)
-- [ ] Inter-plugin API: `openPicker`, `openImagePicker`, `pickFile`, `registerAliases`
+- [x] Inline dropdown processor (post-processor wired)
+- [x] Settings tab shell (glassmorphism, custom aliases)
+- [x] `styles.css` — live glassmorphism, copied verbatim (36,649 bytes)
+- [ ] Inter-plugin API: `openPicker`, `openImagePicker`, `pickFile`
 
 ## Develop
 
