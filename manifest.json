@@ -1,9 +1,10 @@
 {
-  "id": "note-toolbox",
-  "name": "Note Toolbox",
-  "version": "1.0.0",
-  "minAppVersion": "1.7.2",
-  "description": "Fix LaTeX, multi‑select files, and insert dropdowns.",
-  "author": "Mostakim DeepSeek",
-  "isDesktopOnly": false
+	"id": "note-toolbox",
+	"name": "Note Toolbox",
+	"version": "1.1.0",
+	"minAppVersion": "1.7.0",
+	"description": "Visual media manager, universal attachment picker, and inline dropdowns.",
+	"author": "Mostakim 4 Argon",
+	"authorUrl": "https://github.com/Mostakim2005",
+	"isDesktopOnly": false
 }
