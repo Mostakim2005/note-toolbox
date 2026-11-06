@@ -1,58 +1,67 @@
-import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
-import { DEFAULT_SETTINGS, NoteToolboxSettings, NoteToolboxSettingTab, normalizeSettings } from "./settings";
-import { InlineDropdownProcessor } from "./dropdown-processor";
-import { FileCheckView, FILE_CHECK_VIEW_TYPE } from "./file-check-view";
-
+import { Plugin, Notice, normalizePath, TFile, TFolder } from "obsidian";
+import { DEFAULT_SETTINGS } from "./settings";
+import type { NoteToolboxSettings } from "./types";
+// Pilot entry ported from Nihon 1.1.0 bundle (3424 lines).
+// Full split (MediaService, MediaToolboxModal, DropdownManager, InlineDropdownProcessor) is incremental — see README parity checklist.
 export default class NoteToolboxPlugin extends Plugin {
-    settings: NoteToolboxSettings = DEFAULT_SETTINGS;
+	settings!: NoteToolboxSettings;
+	service: any = null;
 
-    async onload(): Promise<void> {
-        this.settings = await this.loadPluginSettings();
+	applyThemePreferences() {
+		if (typeof document !== "undefined") {
+			document.body.toggleClass("nt-glassmorphic", Boolean(this.settings.glassmorphism ?? true));
+		}
+	}
 
-        this.addSettingTab(new NoteToolboxSettingTab(this.app, this));
+	async onload() {
+		await this.loadSettings();
+		this.applyThemePreferences();
+		console.warn("[note-toolbox] MediaService/UI split pending — entry lifecycle only in pilot.");
 
-        this.registerView(FILE_CHECK_VIEW_TYPE, (leaf) => new FileCheckView(leaf, this));
+		this.addCommand({
+			id: "open-media-toolbox",
+			name: "Open Media Toolbox",
+			callback: () => new Notice("Media Toolbox port in progress — see README parity section."),
+		});
 
-        this.addRibbonIcon("checkmark", "Open file multi-select", () => {
-            void this.activateFileCheckView();
-        });
+		this.addCommand({
+			id: "open-dropdown-manager",
+			name: "Manage Inline Dropdowns",
+			callback: () => new Notice("Dropdown manager port in progress — see README parity section."),
+		});
 
-        this.addCommand({
-            id: "open-file-multi-select",
-            name: "Open file multi-select",
-            callback: () => void this.activateFileCheckView(),
-        });
+		this.addRibbonIcon("layout-grid", "Open Media Toolbox", () => {
+			new Notice("Note Toolbox — pilot build.");
+		});
 
-        const dropdownProcessor = new InlineDropdownProcessor(this);
-        this.registerMarkdownPostProcessor((element, context) => {
-            dropdownProcessor.process(element, context);
-        });
-    }
+		this.addSettingTab(new NoteToolboxSettingPlaceholder(this.app, this));
+	}
 
-    async loadPluginSettings(): Promise<NoteToolboxSettings> {
-        try {
-            const saved = await this.loadData() as unknown;
-            return normalizeSettings(saved);
-        } catch (error) {
-            console.error("Note Toolbox: failed to load settings", error);
-            new Notice("Note toolbox settings were invalid. Defaults were restored.");
-            return { ...DEFAULT_SETTINGS, dropdownLists: {} };
-        }
-    }
+	onunload() {
+		if (typeof document !== "undefined") document.body.removeClass("nt-glassmorphic");
+		document.querySelectorAll(".nt-canvas-overlay-btn").forEach((el) => el.remove());
+	}
 
-    async savePluginSettings(): Promise<void> {
-        await this.saveData(this.settings);
-    }
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		if (!Array.isArray(this.settings.excludedFolders)) this.settings.excludedFolders = [];
+		if (!Array.isArray(this.settings.excludedExtensions)) this.settings.excludedExtensions = [];
+	}
 
-    async activateFileCheckView(): Promise<void> {
-        const { workspace } = this.app;
-        let leaf: WorkspaceLeaf | undefined = workspace.getLeavesOfType(FILE_CHECK_VIEW_TYPE)[0];
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+}
 
-        if (!leaf) {
-            leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf("split");
-            await leaf.setViewState({ type: FILE_CHECK_VIEW_TYPE, active: true });
-        }
-
-        await workspace.revealLeaf(leaf);
-    }
+import { PluginSettingTab, App } from "obsidian";
+class NoteToolboxSettingPlaceholder extends PluginSettingTab {
+	constructor(app: App, private plugin: NoteToolboxPlugin) {
+		super(app, plugin);
+	}
+	display(): void {
+		const { containerEl } = this;
+		containerEl.empty();
+		containerEl.createEl("h2", { text: "Note Toolbox — pilot" });
+		containerEl.createEl("p", { text: "Full settings UI port is next split step. Defaults match Nihon 1.1.0." });
+	}
 }

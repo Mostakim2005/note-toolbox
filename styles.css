@@ -1,271 +1,1533 @@
-/* Note Toolbox — uses Obsidian variables so it follows the active theme. */
+/* ==========================================================================
+   Note Toolbox - Modern Obsidian Design System
+   Compatible with all Obsidian themes (Light & Dark)
+   ========================================================================== */
 
-.note-toolbox-view {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    height: 100%;
-    padding: 20px;
-    box-sizing: border-box;
+:root,
+.nt-media-window,
+.nt-media-modal {
+  --nt-accent: var(--interactive-accent, #00a884);
+  --nt-accent-hover: var(--interactive-accent-hover, #008f70);
+  --nt-accent-soft: rgba(var(--interactive-accent-rgb, 0, 168, 132), 0.12);
+  --nt-accent-border: rgba(var(--interactive-accent-rgb, 0, 168, 132), 0.35);
+  --nt-radius-card: 10px;
+  --nt-radius-btn: 6px;
+  --nt-radius-chip: 9999px;
+  --nt-transition-fast: 120ms ease;
+  --nt-transition-med: 180ms ease;
+
+  /* Hybrid Glassmorphic Design Tokens */
+  --nt-glass-bg: var(--background-primary);
+  --nt-glass-card: var(--background-secondary);
+  --nt-glass-card-hover: var(--background-modifier-hover);
+  --nt-glass-blur: 16px;
+  --nt-glass-border: rgba(var(--interactive-accent-rgb, 0, 168, 132), 0.22);
+  --nt-glass-border-subtle: var(--background-modifier-border);
+  --nt-glass-glow: rgba(var(--interactive-accent-rgb, 0, 168, 132), 0.15);
+  --nt-glass-shadow: 0 20px 48px rgba(0, 0, 0, 0.38), 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
-.note-toolbox-header {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+body:not(.nt-glassmorphic) .nt-media-window,
+body:not(.nt-glassmorphic) .nt-media-modal,
+body:not(.nt-glassmorphic) .nt-prompt-modal,
+body:not(.nt-glassmorphic) .nt-selector-modal,
+body:not(.nt-glassmorphic) .nt-quicklook-modal,
+body:not(.nt-glassmorphic) .nt-folder-picker-modal,
+body:not(.nt-glassmorphic) .nt-ext-picker-modal,
+body:not(.nt-glassmorphic) .nt-dropdown-modal {
+  --nt-glass-bg: var(--background-primary);
+  --nt-glass-card: var(--background-secondary);
+  --nt-glass-card-hover: var(--background-modifier-hover);
+  --nt-glass-blur: 0px;
+  --nt-glass-border: var(--background-modifier-border);
+  --nt-glass-border-subtle: var(--background-modifier-border);
+  --nt-glass-shadow: var(--shadow-l, 0 16px 40px rgba(0, 0, 0, 0.25));
 }
 
-.note-toolbox-header-title h2 {
-    margin: 0;
-    font-size: var(--font-ui-large);
-    letter-spacing: -0.01em;
+/* ==========================================================================
+   Main Media Toolbox Modal Shell & Flexbox Scrollport Fixes
+   ========================================================================== */
+
+.nt-media-window,
+.nt-media-modal {
+  width: 90vw !important;
+  max-width: 1180px !important;
+  height: 86vh !important;
+  max-height: 860px !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px 22px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
-.note-toolbox-header-title p {
-    margin: 4px 0 0;
-    color: var(--text-muted);
+.nt-media-window > .modal-close-button,
+.nt-media-modal > .modal-close-button,
+.nt-dropdown-modal > .modal-close-button {
+  display: none !important;
 }
 
-.note-toolbox-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+/* Make Obsidian's modal-content a proper flex child and flex container */
+.nt-media-window .modal-content,
+.nt-media-modal .modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
 }
 
-.note-toolbox-search {
-    flex: 1 1 220px;
-    min-width: 160px;
+/* Header & Top Bar */
+.nt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.note-toolbox-select {
-    min-width: 120px;
+.nt-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.note-toolbox-file-container {
-    min-height: 160px;
-    flex: 1;
-    overflow: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
-    background: var(--background-primary);
+.nt-title-group h2 {
+  margin: 0;
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+  color: var(--text-normal);
+  line-height: 1.2;
 }
 
-.note-toolbox-file-container.is-list {
-    display: flex;
-    flex-direction: column;
+.nt-badge-count {
+  font-size: var(--font-ui-smaller);
+  background: var(--nt-accent-soft);
+  color: var(--nt-accent);
+  border: 1px solid var(--nt-accent-border);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
-.note-toolbox-file-container.is-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--note-toolbox-grid-columns), minmax(0, 1fr));
-    gap: 10px;
-    padding: 10px;
-    align-content: start;
+.nt-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--nt-transition-fast);
 }
 
-.note-toolbox-file-row,
-.note-toolbox-file-card {
-    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+.nt-icon-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
 }
 
-.note-toolbox-file-row {
-    display: grid;
-    grid-template-columns: auto 42px minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    cursor: default;
+.nt-icon-btn:focus-visible {
+  outline: 2px solid var(--nt-accent);
+  outline-offset: 1px;
 }
 
-.note-toolbox-file-row:last-child {
-    border-bottom: 0;
+/* Navigation Row (Category Tabs on Left, Search + Reset on Right) */
+.nt-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.note-toolbox-file-row:hover,
-.note-toolbox-file-card:hover {
-    background: var(--background-secondary);
+.nt-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.note-toolbox-file-card {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 10px;
-    padding: 12px;
-    min-width: 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
-    background: var(--background-primary);
-    cursor: default;
+.nt-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 320px;
+  justify-content: flex-end;
 }
 
-.note-toolbox-file-card:hover {
-    transform: translateY(-1px);
+/* Filter Row (Context Dropdowns on Left, Exclusions on Right) */
+.nt-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.note-toolbox-preview {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    overflow: hidden;
-    border-radius: var(--radius-s);
-    background: var(--background-secondary);
-    color: var(--text-muted);
-    font-size: var(--font-small);
-    font-weight: 600;
+.nt-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
 }
 
-.note-toolbox-file-card .note-toolbox-preview {
-    width: 100%;
-    height: 120px;
-    grid-column: 1 / -1;
+.nt-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.note-toolbox-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.nt-search-input {
+  height: 32px !important;
+  box-sizing: border-box !important;
+  flex: 1;
+  min-width: 160px;
+  border-radius: var(--nt-radius-btn) !important;
+  padding: 4px 10px !important;
+  background: var(--background-secondary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  color: var(--text-normal) !important;
+  font-size: var(--font-ui-smaller) !important;
+  transition: border-color var(--nt-transition-fast);
 }
 
-.note-toolbox-file-details {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
+.nt-search-input:focus {
+  border-color: var(--nt-accent) !important;
+  box-shadow: 0 0 0 2px var(--nt-accent-soft) !important;
 }
 
-.note-toolbox-file-details strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.nt-select {
+  height: 32px !important;
+  box-sizing: border-box !important;
+  border-radius: var(--nt-radius-btn) !important;
+  padding: 4px 8px !important;
+  background: var(--background-secondary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  color: var(--text-normal) !important;
+  cursor: pointer;
+  font-size: var(--font-ui-smaller);
+  max-width: 175px;
 }
 
-.note-toolbox-file-path,
-.note-toolbox-file-info {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-muted);
-    font-size: var(--font-small);
+.nt-select:hover {
+  border-color: var(--background-modifier-border-hover) !important;
 }
 
-.note-toolbox-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 10px 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
-    background: var(--background-secondary);
+.nt-select:focus {
+  border-color: var(--nt-accent) !important;
 }
 
-.note-toolbox-selection-summary {
-    color: var(--text-muted);
-    font-size: var(--font-small);
+/* Category Filter Chips */
+.nt-chip-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.note-toolbox-actions {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+.nt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+  border-radius: var(--nt-radius-chip);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+  transition: all var(--nt-transition-fast);
+  user-select: none;
 }
 
-.note-toolbox-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 180px;
-    gap: 6px;
-    color: var(--text-muted);
-    text-align: center;
+.nt-chip:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  border-color: var(--background-modifier-border-hover);
 }
 
-.note-toolbox-empty strong {
-    color: var(--text-normal);
+.nt-chip.is-active {
+  background: var(--nt-accent);
+  color: var(--text-on-accent, #ffffff);
+  border-color: var(--nt-accent);
+  box-shadow: 0 2px 6px var(--nt-accent-soft);
 }
 
-.note-toolbox-modal {
-    min-width: min(420px, 80vw);
+.nt-chip.mod-pill-filter {
+  padding: 0 10px !important;
+  height: 26px !important;
+  font-size: 0.75rem;
 }
 
-.note-toolbox-modal-input {
-    width: 100%;
-    box-sizing: border-box;
-    margin: 8px 0 14px;
+.nt-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.note-toolbox-modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+.nt-chip-icon svg {
+  width: 13px;
+  height: 13px;
 }
 
-.note-toolbox-folder-list {
-    max-height: 50vh;
-    overflow: auto;
-    margin: 12px 0 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+/* Action Toolbar */
+.nt-actions-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.note-toolbox-folder-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 8px;
-    border-radius: var(--radius-s);
+.nt-picker-hint {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
 }
 
-.note-toolbox-folder-option:hover {
-    background: var(--background-secondary);
+.nt-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.note-toolbox-dropdown {
-    margin: 0 3px;
-    padding: 2px 24px 2px 7px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-s);
-    background: var(--background-secondary);
-    color: var(--text-normal);
+.nt-btn-sm {
+  height: 30px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box !important;
+  font-size: var(--font-ui-smaller) !important;
+  border-radius: var(--nt-radius-btn) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  cursor: pointer;
 }
 
-.note-toolbox-settings-json {
-    width: 100%;
-    min-height: 160px;
-    font-family: var(--font-monospace);
+.nt-btn-sm.is-active {
+  background: var(--nt-accent) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  border-color: var(--nt-accent) !important;
 }
 
-.note-toolbox-settings-list {
-    margin: 12px 0;
-    padding: 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
-    background: var(--background-secondary);
+/* Inline grid-size controls in the toolbox top bar (live rows / columns) */
+.nt-layout-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--nt-radius-btn);
+  background: var(--background-primary);
 }
 
-@media (max-width: 700px) {
-    .note-toolbox-view {
-        padding: 12px;
-    }
+.nt-layout-group .nt-btn-icon {
+  color: var(--text-muted);
+  padding: 0 2px;
+  display: inline-flex;
+  align-items: center;
+}
 
-    .note-toolbox-file-container.is-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.nt-layout-group .nt-btn-icon svg {
+  width: 15px;
+  height: 15px;
+}
 
-    .note-toolbox-file-row {
-        grid-template-columns: auto 36px minmax(0, 1fr);
-    }
+.nt-layout-select {
+  height: 24px !important;
+  padding: 0 4px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: var(--font-ui-smaller) !important;
+  color: var(--text-normal);
+  cursor: pointer;
+  border-radius: 5px;
+}
 
-    .note-toolbox-preview {
-        width: 36px;
-        height: 36px;
-    }
+.nt-layout-select:hover {
+  background: var(--background-modifier-hover) !important;
+}
+
+.nt-btn-mint {
+  height: 30px !important;
+  box-sizing: border-box !important;
+  background: var(--nt-accent) !important;
+  color: var(--text-on-accent, #ffffff) !important;
+  border: none !important;
+  border-radius: var(--nt-radius-btn) !important;
+  padding: 0 14px !important;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--font-ui-smaller) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: filter var(--nt-transition-fast), transform var(--nt-transition-fast);
+}
+
+.nt-btn-mint:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.nt-btn-mint:active {
+  transform: translateY(0);
+}
+  transition: filter var(--nt-transition-fast), transform var(--nt-transition-fast);
+}
+
+.nt-btn-mint:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.nt-btn-mint:active {
+  transform: translateY(0);
+}
+
+.nt-btn-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nt-btn-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ==========================================================================
+   Viewport Container Wrapper & Scrollbars
+   ========================================================================== */
+
+.nt-viewport-wrapper {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.nt-grid-viewport,
+.nt-list-viewport {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+/* Clean, modern scrollbars */
+.nt-grid-viewport::-webkit-scrollbar,
+.nt-list-viewport::-webkit-scrollbar {
+  width: 8px !important;
+  display: block !important;
+}
+
+.nt-grid-viewport::-webkit-scrollbar-thumb,
+.nt-list-viewport::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border-hover, #666) !important;
+  border-radius: 4px !important;
+}
+
+.nt-grid-viewport::-webkit-scrollbar-track,
+.nt-list-viewport::-webkit-scrollbar-track {
+  background: var(--background-secondary) !important;
+}
+
+/* Floating Scroll to Top Button */
+.nt-scroll-top-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  z-index: 50;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border-radius: 20px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: all var(--nt-transition-fast);
+}
+
+.nt-scroll-top-btn.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.nt-scroll-top-btn:hover {
+  color: var(--nt-accent);
+  border-color: var(--nt-accent);
+  background: var(--background-secondary);
+}
+
+/* ==========================================================================
+   Grid Viewport & Cards
+   ========================================================================== */
+
+.nt-grid-viewport {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  /* Fallback row height — main.js overrides this with exact px based on the
+     configured row count (--nt-gallery-rows) so N rows fit the viewport. */
+  grid-auto-rows: calc((100% - (var(--nt-gallery-rows, 4) - 1) * 12px) / var(--nt-gallery-rows, 4));
+  gap: 12px;
+  padding: 12px;
+  align-content: start;
+  background: var(--nt-glass-card);
+}
+
+.nt-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--nt-glass-bg);
+  border: 1px solid var(--nt-glass-border-subtle);
+  border-radius: var(--nt-radius-card);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: all 160ms cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
+  contain: content;
+  content-visibility: auto;
+  contain-intrinsic-size: 240px 180px;
+}
+
+.nt-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--nt-accent-border);
+  background: var(--nt-glass-card-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), 0 0 0 1px var(--nt-accent-soft);
+}
+
+.nt-card:focus-visible {
+  outline: 2px solid var(--nt-accent);
+  outline-offset: 2px;
+}
+
+.nt-card.is-selected {
+  border-color: var(--nt-accent);
+  background: var(--nt-accent-soft);
+  box-shadow: 0 0 0 1px var(--nt-accent);
+}
+
+.nt-card-check {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--nt-accent);
+  color: var(--text-on-accent, #ffffff);
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nt-card-check svg {
+  width: 13px;
+  height: 13px;
+}
+
+.nt-card.is-selected .nt-card-check {
+  display: flex;
+}
+
+.nt-card-thumb {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 48px;
+  background: var(--background-secondary);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.nt-card-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  /* Show the WHOLE image, centered. The rest of the tile stays empty space. */
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block;
+}
+
+.nt-badge-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: var(--font-ui-smaller);
+}
+
+.nt-badge-media svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.7;
+}
+
+.nt-badge-media.mod-video svg {
+  color: var(--text-accent, var(--nt-accent));
+}
+
+.nt-badge-media.mod-audio svg {
+  color: #e09f3e;
+}
+
+.nt-badge-media.mod-doc svg {
+  color: #3a86ff;
+}
+
+.nt-card-details {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--background-primary);
+}
+
+.nt-card-title {
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-normal);
+}
+
+.nt-card-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.nt-tag-chip {
+  font-size: 0.68rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+.nt-tag-chip.mod-orphan {
+  background: rgba(224, 75, 75, 0.12);
+  color: #e04b4b;
+  border-color: rgba(224, 75, 75, 0.3);
+}
+
+/* ==========================================================================
+   List Viewport (Table Layout & Clickable Sort Headers)
+   ========================================================================== */
+
+.nt-list-viewport {
+  background: var(--background-secondary);
+}
+
+.nt-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-ui-smaller);
+}
+
+.nt-list-table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: var(--background-secondary-alt) !important;
+  padding: 9px 12px !important;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  user-select: none;
+}
+
+.nt-list-table thead th.nt-sortable-th {
+  cursor: pointer;
+  transition: background-color var(--nt-transition-fast), color var(--nt-transition-fast);
+}
+
+.nt-list-table thead th.nt-sortable-th:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover) !important;
+}
+
+.nt-sort-arrow {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  color: var(--nt-accent);
+}
+
+.nt-list-row {
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  transition: background-color var(--nt-transition-fast);
+  content-visibility: auto;
+  contain-intrinsic-size: 42px;
+}
+
+.nt-list-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.nt-list-row.is-selected {
+  background: var(--nt-accent-soft);
+}
+
+.nt-list-cell {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.nt-list-cell.cell-thumb {
+  width: 44px;
+  text-align: center;
+  padding-right: 4px;
+}
+
+.nt-list-cell.cell-actions {
+  width: 130px;
+  text-align: right;
+  padding-left: 0;
+}
+
+.nt-list-mini-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.nt-list-mini-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nt-list-name-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.nt-list-name {
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.nt-list-path {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.nt-list-path:hover {
+  text-decoration: underline;
+  color: var(--nt-accent);
+}
+
+.nt-list-row-actions {
+  display: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.nt-list-row:hover .nt-list-row-actions {
+  display: flex;
+}
+
+/* ==========================================================================
+   Canvas & Excalidraw Floating Overlay Button
+   ========================================================================== */
+
+.nt-canvas-overlay-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: transform var(--nt-transition-fast), color var(--nt-transition-fast), border-color var(--nt-transition-fast);
+}
+
+.nt-canvas-overlay-btn:hover {
+  transform: scale(1.08);
+  color: var(--nt-accent);
+  border-color: var(--nt-accent);
+  background: var(--background-primary);
+}
+
+/* ==========================================================================
+   Quick Look Lightbox Modal
+   ========================================================================== */
+
+.nt-quicklook-modal {
+  width: 78vw !important;
+  max-width: 860px !important;
+  height: 84vh !important;
+  max-height: 84vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 18px 22px !important;
+  border-radius: 14px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Make Obsidian's modal-content a proper bounded flex column so the preview
+   area gets a fixed height and images can letterbox inside it */
+.nt-quicklook-modal .modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
+.nt-ql-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+}
+
+.nt-ql-header h3 {
+  margin: 0;
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 85%;
+}
+
+.nt-ql-preview {
+  flex: 1 1 0% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 0 !important;
+  margin-bottom: 14px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Whole image always visible: scales down to fit the preview box, stays
+   centered, and letterboxes (empty space above/below or left/right). */
+.nt-ql-preview img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border-radius: 4px;
+}
+
+.nt-ql-preview video {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 4px;
+  outline: none;
+}
+
+.nt-ql-audio-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+.nt-ql-audio-icon svg {
+  width: 54px;
+  height: 54px;
+  color: #e09f3e;
+}
+
+.nt-ql-doc-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.nt-ql-doc-icon svg {
+  width: 54px;
+  height: 54px;
+  color: var(--text-accent, var(--interactive-accent));
+}
+
+.nt-badge-media.mod-audio svg,
+.nt-ql-audio-icon svg {
+  color: var(--text-warning, #b45309);
+}
+
+.nt-tag-chip.mod-orphan {
+  color: var(--text-error, #b91c1c);
+}
+
+.nt-ql-doc-desc {
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+.nt-ql-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--background-modifier-border);
+  gap: 12px;
+}
+
+.nt-ql-stats {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Prompt & Confirmation Modals
+   ========================================================================== */
+
+.nt-prompt-modal {
+  padding: 20px 24px !important;
+  border-radius: 14px !important;
+  max-width: 440px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+}
+
+.nt-prompt-modal h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.nt-prompt-modal .nt-muted {
+  margin-bottom: 14px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.nt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   Inline Dropdown Rendering in Notes
+   ========================================================================== */
+
+.nt-dropdown-wrap {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.nt-inline-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--background-secondary) !important;
+  color: var(--text-normal) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  border-radius: 12px !important;
+  padding: 2px 22px 2px 9px !important;
+  font-size: 0.85em !important;
+  line-height: 1.4 !important;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  transition: all var(--nt-transition-fast);
+}
+
+.nt-inline-select:hover {
+  border-color: var(--nt-accent) !important;
+  background-color: var(--background-modifier-hover) !important;
+}
+
+.nt-inline-select:focus {
+  outline: none;
+  border-color: var(--nt-accent) !important;
+  box-shadow: 0 0 0 2px var(--nt-accent-soft) !important;
+}
+
+/* ==========================================================================
+   Interactive Dropdown Manager UI
+   ========================================================================== */
+
+.nt-dropdown-modal {
+  width: 85vw !important;
+  max-width: 780px !important;
+  padding: 20px 24px !important;
+  border-radius: 16px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+}
+
+.nt-settings-subheading {
+  margin-top: 24px;
+  margin-bottom: 4px;
+}
+
+.nt-dd-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.nt-dd-list-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nt-dd-chip-count {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.nt-dd-inline-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 240px;
+  justify-content: flex-end;
+}
+
+.nt-dd-input {
+  flex: 1;
+  max-width: 260px;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+}
+
+.nt-dd-active-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nt-dd-active-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nt-dd-title-input {
+  font-weight: 600;
+  font-size: var(--font-ui-medium);
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  width: 170px;
+}
+
+.nt-dd-title-input:hover,
+.nt-dd-title-input:focus {
+  border-color: var(--background-modifier-border) !important;
+  background: var(--background-primary) !important;
+}
+
+.nt-dd-token-badge {
+  font-family: var(--font-monospace);
+  font-size: var(--font-smaller);
+  background: var(--nt-accent-soft) !important;
+  color: var(--nt-accent) !important;
+  border: 1px solid var(--nt-accent-border) !important;
+  border-radius: 6px !important;
+  padding: 3px 10px !important;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.nt-dd-token-badge:hover {
+  filter: brightness(1.1);
+}
+
+.nt-dd-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.nt-dd-option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  transition: border-color var(--nt-transition-fast), background-color var(--nt-transition-fast);
+}
+
+.nt-dd-option-row.is-selected {
+  border-color: var(--nt-accent);
+  background: var(--nt-accent-soft);
+}
+
+.nt-dd-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--nt-transition-fast);
+}
+
+.nt-dd-option-row.is-selected .nt-dd-checkbox {
+  background: var(--nt-accent);
+  border-color: var(--nt-accent);
+  color: var(--text-on-accent, #ffffff);
+}
+
+.nt-dd-checkbox svg {
+  width: 12px;
+  height: 12px;
+}
+
+.nt-dd-opt-input {
+  flex: 1;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+}
+
+.nt-dd-opt-input:hover,
+.nt-dd-opt-input:focus {
+  border-color: var(--background-modifier-border) !important;
+  background: var(--background-primary) !important;
+}
+
+.nt-dd-row-ops {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nt-dd-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 10px;
+}
+
+/* Empty State & Helpers */
+.nt-hidden {
+  display: none !important;
+}
+
+.nt-empty-wrap {
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.nt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  gap: 8px;
+  text-align: center;
+}
+
+.nt-empty-icon svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.45;
+}
+
+/* ==========================================================================
+   Visual Folder Selector Modal & Folder Chips
+   ========================================================================== */
+
+.nt-folder-picker-modal {
+  width: 75vw !important;
+  max-width: 620px !important;
+  height: 75vh !important;
+  max-height: 700px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 18px 22px !important;
+  border-radius: 14px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+}
+
+.nt-folder-picker-modal .modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.nt-folder-list-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 10px 0;
+}
+
+.nt-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color var(--nt-transition-fast);
+  user-select: none;
+}
+
+.nt-folder-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.nt-folder-row.is-selected {
+  background: var(--nt-accent-soft);
+}
+
+.nt-folder-row-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--nt-transition-fast);
+}
+
+.nt-folder-row.is-selected .nt-folder-row-checkbox {
+  background: var(--nt-accent);
+  border-color: var(--nt-accent);
+  color: var(--text-on-accent, #ffffff);
+}
+
+.nt-folder-row-checkbox svg {
+  width: 11px;
+  height: 11px;
+}
+
+.nt-folder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.nt-folder-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nt-folder-row.is-selected .nt-folder-icon {
+  color: var(--nt-accent);
+}
+
+.nt-folder-name {
+  font-weight: 500;
+  color: var(--text-normal);
+  flex: 1;
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nt-folder-path {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Visual Folder Chips in Settings & Modal */
+.nt-folder-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.nt-folder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+}
+
+.nt-folder-chip svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+}
+
+.nt-folder-chip-del {
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.nt-folder-chip-del:hover {
+  color: var(--text-error, #e04b4b);
+  background: var(--background-modifier-hover);
+}
+
+.nt-folder-chip-del svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ==========================================================================
+   Visual Extension Selector Modal & Extension Rows
+   ========================================================================== */
+
+.nt-ext-picker-modal {
+  width: 75vw !important;
+  max-width: 640px !important;
+  height: 75vh !important;
+  max-height: 700px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 18px 22px !important;
+  border-radius: 14px !important;
+  background: var(--nt-glass-bg) !important;
+  backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(var(--nt-glass-blur)) saturate(160%) !important;
+  border: 1px solid var(--nt-glass-border) !important;
+  box-shadow: var(--nt-glass-shadow) !important;
+}
+
+.nt-ext-picker-modal .modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.nt-ext-list-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 10px 0;
+}
+
+.nt-ext-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color var(--nt-transition-fast);
+  user-select: none;
+}
+
+.nt-ext-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.nt-ext-row.is-selected {
+  background: var(--nt-accent-soft);
+}
+
+.nt-ext-badge {
+  font-family: var(--font-monospace);
+  font-weight: 600;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 58px;
+  text-align: center;
+}
+
+.nt-ext-row.is-selected .nt-ext-badge {
+  border-color: var(--nt-accent);
+  color: var(--nt-accent);
+}
+
+.nt-ext-cat {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  flex: 1;
+}
+
+.nt-ext-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--background-secondary-alt);
+  padding: 1px 7px;
+  border-radius: 10px;
 }
