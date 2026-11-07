@@ -279,12 +279,12 @@ export class FileCheckView extends ItemView {
             return;
         }
 
-        new ConfirmModal(
-            this.app,
-            "Move files to trash?",
-            `This will move ${files.length} selected file${files.length === 1 ? "" : "s"} to Obsidian's trash.`,
-            "Move to trash",
-            async () => {
+        new ConfirmModal(this.app, {
+            title: "Move files to trash?",
+            message: `This will move ${files.length} selected file${files.length === 1 ? "" : "s"} to Obsidian's trash.`,
+            confirmText: "Move to trash",
+            isDanger: true,
+            onConfirm: async () => {
                 try {
                     await this.fileService.delete(files);
                     this.selected.clear();
@@ -294,7 +294,7 @@ export class FileCheckView extends ItemView {
                     showFileOperationError("Delete", error);
                 }
             },
-        ).open();
+        }).open();
     }
 
     private async renameFirst(): Promise<void> {
