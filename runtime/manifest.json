@@ -1,11 +1,10 @@
-﻿{
+{
   "id": "note-toolbox",
   "name": "Note Toolbox",
   "version": "1.1.0",
   "minAppVersion": "1.7.0",
   "description": "Visual media manager, universal attachment picker, and inline dropdowns.",
   "author": "Mostakim2005",
-	"authorUrl": "https://github.com/Mostakim2005",
+  "authorUrl": "https://github.com/Mostakim2005",
   "isDesktopOnly": false
 }
-
