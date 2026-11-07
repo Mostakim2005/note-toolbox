@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Note Toolbox — Visual Guide</title>
+<style>
+  :root {
+    --bg: #0f1217;
+    --panel: #171c24;
+    --panel-2: #1e2530;
+    --ink: #e8edf5;
+    --muted: #98a4b5;
+    --line: #2b3442;
+    --mint: #6ee7b7;
+    --mint-dim: #133b31;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --blue: #93c5fd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 20% -10%, #1b2a2f 0%, var(--bg) 55%);
+    color: var(--ink);
+    font: 15px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  a { color: var(--mint); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.hero {
+    border: 1px solid var(--line);
+    background: linear-gradient(135deg, rgba(110,231,183,.08), rgba(147,197,253,.04));
+    border-radius: 18px;
+    padding: 32px;
+    margin-bottom: 28px;
+  }
+  .eyebrow { color: var(--mint); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+  h1 { font-size: 38px; line-height: 1.15; margin: 10px 0 12px; }
+  h1 span { color: var(--mint); }
+  .lede { color: var(--muted); max-width: 760px; margin: 0; font-size: 16px; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 32px; }
+  nav.toc a {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 7px 12px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  section { margin: 36px 0; }
+  h2 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 15px; color: var(--mint); }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .pill { display: inline-block; font-size: 11px; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px; }
+  .pill.ok { background: var(--mint-dim); color: var(--mint); }
+  .pill.warn { background: #3b2f13; color: var(--amber); }
+  .pill.bad { background: #3b1616; color: var(--red); }
+  .arch {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px;
+    overflow-x: auto;
+  }
+  .lanes { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 14px; min-width: 820px; }
+  .lane { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .lane h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .node { background: #121820; border: 1px solid var(--line); border-left: 3px solid var(--mint); border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-bottom: 8px; }
+  .node small { display: block; color: var(--muted); font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; }
+  th { background: var(--panel-2); color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  code { font-family: "Cascadia Code", Consolas, monospace; font-size: 12.5px; color: var(--blue); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+  .step { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px; font-size: 13px; }
+  .arrow { color: var(--muted); }
+  .trap { border-left: 3px solid var(--red); }
+  .trap h3 { color: var(--red); }
+  .verdict { border-left: 3px solid var(--amber); }
+  .verdict h3 { color: var(--amber); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .kbd { border: 1px solid var(--line); background: #10161e; border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Obsidian plugin · visual guide</div>
+    <h1>Note <span>Toolbox</span></h1>
+    <p class="lede">A vault-wide media library, batch asset manager, and inline form system. This dashboard explains what the plugin promises, how the modules fit together, and which rules must survive future edits.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#intent">Intent</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#features">Features</a>
+    <a href="#decisions">Decisions</a>
+    <a href="#traps">Traps</a>
+    <a href="#verify">Verification</a>
+  </nav>
+
+  <section id="intent">
+    <h2>What it is for</h2>
+    <p class="sub">The short version a new maintainer needs before touching code.</p>
+    <div class="grid">
+      <div class="card"><h3>Find any asset fast</h3><p>Filter images, video, audio and documents by folder, extension, usage, or typed text in a modal that never loses its action bar.</p></div>
+      <div class="card"><h3>See the whole picture</h3><p>Grid tiles and the Quick Look lightbox letterbox instead of cropping, so diagrams and tall screenshots remain readable.</p></div>
+      <div class="card"><h3>Clean up safely</h3><p>Rename with tokens, move, and trash many files at once with collision guards, per-file error isolation and link-preserving file-manager calls.</p></div>
+      <div class="card"><h3>Build forms inline</h3><p><code>?[status]</code> becomes a live select bound to frontmatter; <code>?[status|Done]</code> is a self-contained inline select.</p></div>
+      <div class="card"><h3>Reuse everywhere</h3><p>Other plugins call <code>openImagePicker</code>, <code>pickFile</code>, or <code>pickAsset</code> and get the same visual browser.</p></div>
+      <div class="card"><h3>Insert where you work</h3><p>Drop embeds into notes, add file nodes to Canvas, or place images and embeds into Excalidraw with a floating overlay button.</p></div>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2>System map</h2>
+    <p class="sub">UI surfaces sit on top of one data service; all persistence and host access goes through Obsidian APIs.</p>
+    <div class="arch">
+      <div class="lanes">
+        <div class="lane">
+          <h4>UI surfaces</h4>
+          <div class="node">MediaToolboxModal<small>3-tier browser · grid / list</small></div>
+          <div class="node">QuickLookModal<small>image · video · audio · doc</small></div>
+          <div class="node">Folder / Extension selectors<small>exclusion pickers</small></div>
+          <div class="node">DropdownManagerModal<small>list & option editor</small></div>
+          <div class="node">Settings tab<small>chips · defaults · aliases</small></div>
+        </div>
+        <div class="lane">
+          <h4>Core services</h4>
+          <div class="node">MediaService<small>filter · metadata · file ops</small></div>
+          <div class="node">InlineDropdownProcessor<small>post-processor</small></div>
+          <div class="node">Chooser API<small>openPicker · pickFile · pickAsset</small></div>
+        </div>
+        <div class="lane">
+          <h4>State</h4>
+          <div class="node">data.json<small>dropdownLists · exclusions · gallery</small></div>
+          <div class="node">MediaService.cache<small>dimensions by path + mtime</small></div>
+          <div class="node">Linked-path cache<small>4 second TTL</small></div>
+        </div>
+        <div class="lane">
+          <h4>Obsidian API</h4>
+          <div class="node">app.vault<small>files · folders · resource paths</small></div>
+          <div class="node">app.metadataCache<small>resolvedLinks · frontmatter</small></div>
+          <div class="node">app.fileManager<small>rename · trash · links</small></div>
+          <div class="node">Workspace leaves<small>Canvas · Excalidraw</small></div>
+        </div>
+      </div>
+      <div class="flow" style="margin-top:16px">
+        <span class="step">Toolbar change</span><span class="arrow">→</span>
+        <span class="step">getValidFiles()</span><span class="arrow">→</span>
+        <span class="step">filter + sort</span><span class="arrow">→</span>
+        <span class="step">DocumentFragment batch</span><span class="arrow">→</span>
+        <span class="step">IntersectionObserver details</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>Feature contract</h2>
+    <p class="sub">These behaviors are user-visible promises; the full version lives in <code>docs/PRODUCT.md</code>.</p>
+    <table>
+      <thead><tr><th>Feature</th><th>Promise</th><th>Primary anchor</th></tr></thead>
+      <tbody>
+        <tr><td>Three-tier browser</td><td>Nav, filters, and actions never leave the screen.</td><td><code>MediaToolboxModal.render</code></td></tr>
+        <tr><td>Grid gallery</td><td>2–6 rows × 2–8 columns, saved instantly, whole image visible.</td><td><code>applyGalleryLayout</code></td></tr>
+        <tr><td>List view</td><td>Sortable Name/Type/Size/Date headers with row actions.</td><td><code>renderListView</code></td></tr>
+        <tr><td>Quick Look</td><td>Full asset preview with centered letterboxing.</td><td><code>QuickLookModal.onOpen</code></td></tr>
+        <tr><td>Usage filter</td><td>Orphans vs linked from a 4 s cached link graph.</td><td><code>getLinkedFilePaths</code></td></tr>
+        <tr><td>Batch rename</td><td><code>{folder}</code>, <code>{n}</code>, <code>{name}</code>; collisions get <code>_(n)</code>.</td><td><code>MediaService.batchRename</code></td></tr>
+        <tr><td>Move & trash</td><td>Per-file try/catch; counts reported honestly.</td><td><code>handleTrashSelected</code></td></tr>
+        <tr><td>Exclusions</td><td>Folder and extension pickers with All/None/Invert.</td><td><code>FolderSelectorModal</code></td></tr>
+        <tr><td>Inline dropdowns</td><td>Frontmatter or inline value, atomic writes.</td><td><code>InlineDropdownProcessor.process</code></td></tr>
+        <tr><td>Chooser API</td><td>Callback and Promise pickers resolve <code>null</code> on cancel.</td><td><code>NoteToolboxPlugin.pickFile</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="decisions">
+    <h2>Decisions worth knowing</h2>
+    <p class="sub">Each one replaced a working-looking approach that failed at scale.</p>
+    <div class="grid">
+      <div class="card"><span class="pill ok">Chosen</span><h3>TTL link cache</h3><p>Recompute at most every 4 seconds, plus explicit invalidation on metadata, rename, and delete.</p></div>
+      <div class="card"><span class="pill ok">Chosen</span><h3>O(1) selection</h3><p>Resolve selected paths with <code>getAbstractFileByPath</code>; never scan the vault on click or drag.</p></div>
+      <div class="card"><span class="pill ok">Chosen</span><h3>Atomic frontmatter</h3><p><code>processFrontMatter</code> writes dropdown properties; regex YAML editing is banned.</p></div>
+      <div class="card"><span class="pill ok">Chosen</span><h3>Bounded decoding</h3><p>Images, video, and audio race a 1500 ms timeout so corrupt files cannot hang promises.</p></div>
+      <div class="card"><span class="pill ok">Chosen</span><h3>Fragment batches</h3><p>Build 50 cards/fixtures off-DOM, append once, and skip off-screen paint with <code>content-visibility</code>.</p></div>
+      <div class="card"><span class="pill ok">Chosen</span><h3>File-manager mutations</h3><p><code>renameFile</code> and <code>trashFile</code> preserve backlinks and vault trash semantics.</p></div>
+    </div>
+  </section>
+
+  <section id="traps">
+    <h2>Landmines</h2>
+    <p class="sub">If a future change touches these areas, read <code>docs/DECISIONS_AND_TRAPS.md</code> first.</p>
+    <div class="grid">
+      <div class="card trap"><span class="pill bad">Trap</span><h3>Alias re-registration</h3><p>Editing aliases re-adds command IDs; removed aliases can linger until reload.</p></div>
+      <div class="card trap"><span class="pill bad">Trap</span><h3>data.json keys</h3><p>Renaming a settings key without migration silently discards user configuration.</p></div>
+      <div class="card trap"><span class="pill bad">Trap</span><h3>nt-* classes</h3><p>Every class is a contract between CSS and <code>createEl({ cls })</code>; rename both sides together.</p></div>
+      <div class="card trap"><span class="pill bad">Trap</span><h3>runtime/ drift</h3><p>The frozen bundle is a fallback, not a mirror of the live vault or of <code>src/</code>.</p></div>
+      <div class="card trap"><span class="pill bad">Trap</span><h3>Async listeners</h3><p>Wrap with <code>voidAsync</code>; otherwise lint fails and rejections escape.</p></div>
+      <div class="card trap"><span class="pill bad">Trap</span><h3>Cache invalidation</h3><p>Clear both the link cache and dimension cache on rename/delete, or orphans and sizes go stale.</p></div>
+    </div>
+  </section>
+
+  <section id="verify">
+    <h2>Verification</h2>
+    <p class="sub">A change is done only when these pass.</p>
+    <table>
+      <thead><tr><th>Check</th><th>Command</th><th>Pass condition</th></tr></thead>
+      <tbody>
+        <tr><td>Types</td><td><code>npx tsc -noEmit -skipLibCheck</code></td><td>exit 0</td></tr>
+        <tr><td>Lint</td><td><code>npm run lint</code></td><td>0 errors; warnings reviewed</td></tr>
+        <tr><td>Bundle</td><td><code>npm run build</code></td><td>root <code>main.js</code> regenerated</td></tr>
+        <tr><td>Docs</td><td>header/summary count loop</td><td>equal counts in all three Markdown docs</td></tr>
+        <tr><td>Picker API</td><td>manual external call</td><td>3 callback args; Promise resolves payload or null</td></tr>
+      </tbody>
+    </table>
+    <div class="flow" style="margin-top:14px">
+      <span class="step"><span class="kbd">Space</span> Quick Look</span>
+      <span class="step"><span class="kbd">Enter</span> Insert / Choose</span>
+      <span class="step"><span class="kbd">Shift</span>+Click range</span>
+      <span class="step"><span class="kbd">Esc</span> close / cancel</span>
+    </div>
+  </section>
+
+  <footer>
+    Note Toolbox · TypeScript port of the live 1.1.0 bundle · Docs: PRODUCT, ARCHITECTURE, DECISIONS_AND_TRAPS.
+  </footer>
+</div>
+</body>
+</html>
