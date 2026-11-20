@@ -67,6 +67,11 @@ export class QuickLookModal extends Modal {
 	}
 
 	onClose(): void {
+		this.contentEl.querySelectorAll<HTMLMediaElement>("video, audio").forEach((el) => {
+			el.pause();
+			el.removeAttribute("src");
+			el.load();
+		});
 		this.contentEl.empty();
 	}
 }

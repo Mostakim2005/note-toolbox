@@ -17,8 +17,8 @@
   --nt-transition-med: 180ms ease;
 
   /* Hybrid Glassmorphic Design Tokens */
-  --nt-glass-bg: var(--background-primary);
-  --nt-glass-card: var(--background-secondary);
+  --nt-glass-bg: color-mix(in srgb, var(--background-primary) 86%, transparent);
+  --nt-glass-card: color-mix(in srgb, var(--background-secondary) 82%, transparent);
   --nt-glass-card-hover: var(--background-modifier-hover);
   --nt-glass-blur: 16px;
   --nt-glass-border: rgba(var(--interactive-accent-rgb, 0, 168, 132), 0.22);
@@ -1089,7 +1089,7 @@ body:not(.nt-glassmorphic) .nt-dropdown-modal {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--background-modifier-hover);
 }
 
 .nt-dd-inline-add {

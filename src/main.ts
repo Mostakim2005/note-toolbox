@@ -20,6 +20,7 @@ import { NoteToolboxSettingTab } from "./settings-tab";
 export default class NoteToolboxPlugin extends Plugin {
 	settings!: NoteToolboxSettings;
 	service!: MediaService;
+	private registeredAliasIds = new Set<string>();
 
 	applyThemePreferences(): void {
 		if (typeof document !== "undefined") {
@@ -197,20 +198,33 @@ export default class NoteToolboxPlugin extends Plugin {
 	}
 
 	registerAliases(): void {
+		const commandsApi = (
+			this.app as unknown as { commands?: { removeCommand?: (id: string) => void } }
+		).commands;
+		for (const fullId of this.registeredAliasIds) {
+			commandsApi?.removeCommand?.(fullId);
+		}
+		this.registeredAliasIds.clear();
+
 		const raw = this.settings.customAliases || "attach, media, pick";
-		const aliases = raw
-			.split(",")
-			.map((s) => s.trim().toLowerCase())
-			.filter(Boolean);
+		const aliases = [...new Set(
+			raw
+				.split(",")
+				.map((s) => s.trim().toLowerCase())
+				.filter(Boolean),
+		)];
 
 		aliases.forEach((alias) => {
+			const localId = `cmd-alias-${alias}`;
+			const fullId = `${this.manifest.id}:${localId}`;
 			this.addCommand({
-				id: `cmd-alias-${alias}`,
+				id: localId,
 				name: alias,
 				callback: () => {
 					new MediaToolboxModal(this.app, this).open();
 				},
 			});
+			this.registeredAliasIds.add(fullId);
 		});
 	}
 

@@ -80,7 +80,7 @@ export class DropdownManagerUI {
 				.trim()
 				.replace(/\s+/g, "_")
 				.replace(/[^\w-]/g, "");
-			if (!raw) {
+			if (!raw || raw === "__proto__" || raw === "constructor" || raw === "prototype") {
 				new Notice("Enter a valid list name.");
 				return;
 			}
@@ -128,7 +128,13 @@ export class DropdownManagerUI {
 				.trim()
 				.replace(/\s+/g, "_")
 				.replace(/[^\w-]/g, "");
-			if (!nextName || nextName === activeList) {
+			if (
+				!nextName ||
+				nextName === activeList ||
+				nextName === "__proto__" ||
+				nextName === "constructor" ||
+				nextName === "prototype"
+			) {
 				nameInput.value = activeList;
 				return;
 			}

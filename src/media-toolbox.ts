@@ -530,6 +530,12 @@ export class MediaToolboxModal extends Modal {
 		this.viewportWrapper = contentEl.createDiv({ cls: "nt-viewport-wrapper" });
 		this.viewportContainer = this.viewportWrapper.createDiv();
 
+		if (this.galleryResizeObserver) {
+			this.galleryResizeObserver.disconnect();
+		}
+		if (this.rowsChangedListener) {
+			window.removeEventListener("nt-gallery-rows-changed", this.rowsChangedListener);
+		}
 		this.galleryResizeObserver = new ResizeObserver(
 			debounce(() => this.applyGalleryLayout(), 100),
 		);

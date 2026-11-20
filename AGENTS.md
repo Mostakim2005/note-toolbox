@@ -14,28 +14,27 @@
 * **Watch / Dev:** `npm run dev`
 
 ## 3. Repository Directory Structure & Conventions
-* `src/` — modular TypeScript source; one responsibility per file:
-  * `main.ts` — plugin lifecycle, commands, overlays, public chooser API.
-  * `media.ts` — `MediaService`: filtering, link graph, metadata decoding, batch rename/move.
-  * `media-toolbox.ts` — `MediaToolboxModal`: 3-tier browser, grid/list, selection, insertion.
-  * `quick-look.ts` — `QuickLookModal` lightbox.
-  * `exclusions.ts` — `FolderSelectorModal`, `ExtensionSelectorModal`.
-  * `dropdown.ts` — `InlineDropdownProcessor` for `?[list]` / `?[list|value]`.
-  * `dropdown-manager.ts` / `dropdown-manager-modal.ts` — list and option editor.
-  * `modals.ts` — confirm, input prompt, folder select, and the file-view dialogs.
-  * `settings-tab.ts` — native settings tab with chips and synced textareas.
-  * `settings.ts` / `types.ts` — defaults and shared contracts.
-  * `fuzzy.ts` — extension sets, collators, `debounce`, byte/duration formatting, category lookup.
-  * `async.ts` — `voidAsync` wrapper for async DOM listeners.
-  * `file-service.ts` / `file-check-view.ts` — standalone multi-select view, not registered by the plugin.
-* `docs/` — Core Markdown documentation suite (`PRODUCT.md`, `ARCHITECTURE.md`, `DECISIONS_AND_TRAPS.md`, `VISUAL_LOG.md`).
-* `preview/` — On-demand interactive HTML/CSS/JS visual previews (e.g., `preview/visual-guide.html`), created only upon explicit request.
-* `runtime/` — frozen plug-and-play bundle (`main.js`, `manifest.json`, `styles.css`) kept as the emergency fallback. Never regenerate into this folder.
+* `src/` â€” modular TypeScript source; one responsibility per file:
+  * `main.ts` â€” plugin lifecycle, commands, overlays, public chooser API.
+  * `media.ts` â€” `MediaService`: filtering, link graph, metadata decoding, batch rename/move.
+  * `media-toolbox.ts` â€” `MediaToolboxModal`: 3-tier browser, grid/list, selection, insertion.
+  * `quick-look.ts` â€” `QuickLookModal` lightbox.
+  * `exclusions.ts` â€” `FolderSelectorModal`, `ExtensionSelectorModal`.
+  * `dropdown.ts` â€” `InlineDropdownProcessor` for `?[list]` / `?[list|value]`.
+  * `dropdown-manager.ts` / `dropdown-manager-modal.ts` â€” list and option editor.
+  * `modals.ts` â€” confirm, input prompt, folder select, and the file-view dialogs.
+  * `settings-tab.ts` â€” native settings tab with chips and synced textareas.
+  * `settings.ts` / `types.ts` â€” defaults and shared contracts.
+  * `fuzzy.ts` â€” extension sets, collators, `debounce`, byte/duration formatting, category lookup.
+  * `async.ts` â€” `voidAsync` wrapper for async DOM listeners.
+  * `file-service.ts` / `file-check-view.ts` â€” standalone multi-select view, not registered by the plugin.
+* `docs/` â€” Core Markdown documentation suite (`PRODUCT.md`, `ARCHITECTURE.md`, `DECISIONS_AND_TRAPS.md`, `VISUAL_LOG.md`).
+* `preview/` â€” On-demand interactive HTML/CSS/JS visual previews (e.g., `preview/visual-guide.html`), created only upon explicit request.
 * `main.js` at the root is a generated build artifact; edit `src/` instead.
 
 ## 4. Critical Trap Pointers (1-Line Warnings Only)
-* **TRAP 1:** Keep file lookups O(1) via `app.vault.getAbstractFileByPath` rather than scanning arrays — see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: O1-Selection-Lookups]`.
-* **TRAP 2:** Update frontmatter properties atomically via `app.fileManager.processFrontMatter` — see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: Atomic-Frontmatter-Updates]`.
-* **TRAP 3:** Preserve persisted `data.json` keys (`dropdownLists`, etc.) with migrations rather than reshaping defaults — see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Data-Json-Key-Shape]`.
-* **TRAP 4:** Remove `ResizeObserver` and window event listeners in `MediaToolboxModal.onClose` — see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Async-DOM-Listeners]`.
-* **TRAP 5:** Preserve the public picker API contract `(chosen, path, payload)` for inter-plugin callers — see `docs/DECISIONS_AND_TRAPS.md` -> `[SUBSYSTEM: Picker-API-Compatibility]`.
+* **TRAP 1:** Keep file lookups O(1) via `app.vault.getAbstractFileByPath` rather than scanning arrays â€” see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: O1-Selection-Lookups]`.
+* **TRAP 2:** Update frontmatter properties atomically via `app.fileManager.processFrontMatter` â€” see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: Atomic-Frontmatter-Updates]`.
+* **TRAP 3:** Preserve persisted `data.json` keys (`dropdownLists`, etc.) with migrations rather than reshaping defaults â€” see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Data-Json-Key-Shape]`.
+* **TRAP 4:** Remove `ResizeObserver` and window event listeners in `MediaToolboxModal.onClose` â€” see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Async-DOM-Listeners]`.
+* **TRAP 5:** Preserve the public picker API contract `(chosen, path, payload)` for inter-plugin callers â€” see `docs/DECISIONS_AND_TRAPS.md` -> `[SUBSYSTEM: Picker-API-Compatibility]`.
