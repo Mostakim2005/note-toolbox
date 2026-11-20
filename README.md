@@ -26,11 +26,10 @@ Visual media manager, universal attachment picker, and inline dropdown system fo
 - `src/exclusions.ts` — `FolderSelectorModal`, `ExtensionSelectorModal`
 - `src/dropdown.ts` — `InlineDropdownProcessor` (`?[list]`, `?[list|value]`, frontmatter and inline writes)
 - `src/dropdown-manager.ts` + `src/dropdown-manager-modal.ts` — `DropdownManagerUI`, `DropdownManagerModal`
-- `src/modals.ts` — `ConfirmModal`, `InputPromptModal`, `SelectFolderModal`, plus the file-view dialogs
+- `src/modals.ts` — `ConfirmModal`, `InputPromptModal`, `SelectFolderModal`
 - `src/settings-tab.ts` — settings tab with exclusion chips, synced textareas, gallery defaults and dropdown builder
 - `src/main.ts` — plugin entry, commands, aliases, ribbon, overlays, vault cache events, inter-plugin API
 - `src/async.ts` — `voidAsync` for async DOM listeners
-- `src/file-service.ts` + `src/file-check-view.ts` — standalone multi-select view (not registered by the plugin)
 
 ## Parity checklist
 

@@ -28,6 +28,9 @@ export class InlineDropdownProcessor {
 			}
 		}
 
+		const sectionInfo = context.getSectionInfo(element);
+		const seenCounts = new Map<string, number>();
+
 		for (const node of textNodes) {
 			const text = node.nodeValue || "";
 			this.regex.lastIndex = 0;
@@ -48,6 +51,8 @@ export class InlineDropdownProcessor {
 				const listName = (match[1] ?? "").trim();
 				const inlineVal = match[2] !== undefined ? match[2].trim() : null;
 				const options = this.plugin.settings.dropdownLists[listName];
+				const ordinal = seenCounts.get(fullMatch) ?? 0;
+				seenCounts.set(fullMatch, ordinal + 1);
 
 				if (options && options.length) {
 					const select = span.createEl("select", { cls: "dropdown nt-inline-select" });
@@ -68,14 +73,22 @@ export class InlineDropdownProcessor {
 						el.selected = opt === activeVal;
 					});
 
+					let currentToken = fullMatch;
 					select.addEventListener("change", () => {
+						const chosen = select.value;
 						void this.handleChange(
 							sourceFile,
 							listName,
 							inlineVal,
-							fullMatch,
-							select.value,
-						);
+							currentToken,
+							chosen,
+							ordinal,
+							sectionInfo ? { lineStart: sectionInfo.lineStart, lineEnd: sectionInfo.lineEnd } : null,
+						).then(() => {
+							if (inlineVal !== null) {
+								currentToken = `?[${listName}|${chosen}]`;
+							}
+						});
 					});
 				} else {
 					span.append(fullMatch);
@@ -88,31 +101,71 @@ export class InlineDropdownProcessor {
 		}
 	}
 
+	private findNthTokenOffset(
+		text: string,
+		token: string,
+		ordinal: number,
+		section: { lineStart: number; lineEnd: number } | null,
+	): number {
+		let searchStart = 0;
+		let searchEnd = text.length;
+		if (section) {
+			const lines = text.split("\n");
+			let offset = 0;
+			let startOff = 0;
+			let endOff = text.length;
+			for (let i = 0; i < lines.length; i++) {
+				if (i === section.lineStart) startOff = offset;
+				offset += (lines[i]?.length ?? 0) + 1;
+				if (i === section.lineEnd) {
+					endOff = Math.min(text.length, offset);
+					break;
+				}
+			}
+			searchStart = startOff;
+			searchEnd = endOff;
+		}
+		const slice = text.slice(searchStart, searchEnd);
+		let pos = -1;
+		let from = 0;
+		for (let i = 0; i <= ordinal; i++) {
+			pos = slice.indexOf(token, from);
+			if (pos === -1) break;
+			from = pos + token.length;
+		}
+		if (pos !== -1) return searchStart + pos;
+		return text.indexOf(token);
+	}
+
 	private async handleChange(
 		sourceFile: TFile,
 		listName: string,
 		inlineVal: string | null,
 		fullMatch: string,
 		chosen: string,
+		ordinal: number,
+		section: { lineStart: number; lineEnd: number } | null,
 	): Promise<void> {
 		if (inlineVal !== null) {
+			const replacement = `?[${listName}|${chosen}]`;
 			const activeView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
 			if (activeView && activeView.file?.path === sourceFile.path && activeView.editor) {
 				const editor = activeView.editor;
 				const docText = editor.getValue();
-				const idx = docText.indexOf(fullMatch);
+				const idx = this.findNthTokenOffset(docText, fullMatch, ordinal, section);
 				if (idx !== -1) {
 					const fromPos = editor.offsetToPos(idx);
 					const toPos = editor.offsetToPos(idx + fullMatch.length);
-					editor.replaceRange(`?[${listName}|${chosen}]`, fromPos, toPos);
+					editor.replaceRange(replacement, fromPos, toPos);
 					new Notice(`${listName} set to "${chosen}"`);
 					return;
 				}
 			}
 
 			await this.plugin.app.vault.process(sourceFile, (data) => {
-				const replacement = `?[${listName}|${chosen}]`;
-				return data.replace(fullMatch, replacement);
+				const idx = this.findNthTokenOffset(data, fullMatch, ordinal, section);
+				if (idx === -1) return data;
+				return data.slice(0, idx) + replacement + data.slice(idx + fullMatch.length);
 			});
 			new Notice(`${listName} set to "${chosen}"`);
 		} else {

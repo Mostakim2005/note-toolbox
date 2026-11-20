@@ -63,9 +63,21 @@ export default class NoteToolboxPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("active-leaf-change", debouncedInject));
 		this.injectOverlayButtons();
 
+		this.app.workspace.onLayoutReady(() => {
+			void this.service.refreshCanvasLinks();
+		});
+
 		this.registerEvent(
 			this.app.metadataCache.on("resolved", () => {
 				this.service.clearLinkedCache();
+			}),
+		);
+
+		this.registerEvent(
+			this.app.vault.on("modify", (file) => {
+				if (file instanceof TFile && file.extension.toLowerCase() === "canvas") {
+					void this.service.refreshCanvasLinks();
+				}
 			}),
 		);
 

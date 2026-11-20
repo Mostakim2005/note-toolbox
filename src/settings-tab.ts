@@ -3,6 +3,7 @@ import type NoteToolboxPlugin from "./main";
 import { DropdownManagerUI } from "./dropdown-manager";
 import { ExtensionSelectorModal, FolderSelectorModal } from "./exclusions";
 import { voidAsync } from "./async";
+import { debounce } from "./fuzzy";
 
 /** Full settings tab with visual exclusion chips and the dropdown builder. */
 export class NoteToolboxSettingTab extends PluginSettingTab {
@@ -83,6 +84,10 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 				});
 			});
 
+		const debouncedRegisterAliases = debounce(() => {
+			void this.plugin.saveSettings().then(() => this.plugin.registerAliases());
+		}, 350);
+
 		new Setting(containerEl)
 			.setName("Custom Command Aliases")
 			.setDesc("Comma-separated short keywords for the command palette and slash (/) menu.")
@@ -90,10 +95,9 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder("e.g. attach, media, pick, gallery")
 					.setValue(this.plugin.settings.customAliases || "")
-					.onChange(async (val) => {
+					.onChange((val) => {
 						this.plugin.settings.customAliases = val;
-						await this.plugin.saveSettings();
-						this.plugin.registerAliases();
+						debouncedRegisterAliases();
 					});
 			});
 

@@ -23,6 +23,7 @@ export class MediaService {
 	cache = new Map<string, MediaMetadata>();
 	cachedLinkedPaths: Set<string> | null = null;
 	cachedLinkedMtime = 0;
+	private canvasLinksByPath = new Map<string, { mtime: number; files: string[] }>();
 
 	constructor(
 		public app: App,
@@ -61,9 +62,40 @@ export class MediaService {
 				for (const dest in targets) linked.add(dest);
 			}
 		}
+		for (const entry of this.canvasLinksByPath.values()) {
+			for (const dest of entry.files) linked.add(dest);
+		}
 		this.cachedLinkedPaths = linked;
 		this.cachedLinkedMtime = now;
 		return linked;
+	}
+
+	async refreshCanvasLinks(): Promise<void> {
+		const canvasFiles = this.app.vault
+			.getFiles()
+			.filter((f) => f.extension.toLowerCase() === "canvas");
+		const activePaths = new Set(canvasFiles.map((f) => f.path));
+		for (const key of this.canvasLinksByPath.keys()) {
+			if (!activePaths.has(key)) this.canvasLinksByPath.delete(key);
+		}
+		for (const file of canvasFiles) {
+			const existing = this.canvasLinksByPath.get(file.path);
+			if (existing && existing.mtime === file.stat.mtime) continue;
+			try {
+				const raw = JSON.parse(await this.app.vault.cachedRead(file)) as {
+					nodes?: Array<{ type?: string; file?: unknown }>;
+				};
+				const files = Array.isArray(raw?.nodes)
+					? raw.nodes
+							.filter((n) => n?.type === "file" && typeof n.file === "string")
+							.map((n) => n.file as string)
+					: [];
+				this.canvasLinksByPath.set(file.path, { mtime: file.stat.mtime, files });
+			} catch {
+				this.canvasLinksByPath.set(file.path, { mtime: file.stat.mtime, files: [] });
+			}
+		}
+		this.clearLinkedCache();
 	}
 
 	getValidFiles(
