@@ -1,5 +1,5 @@
 # Project Operating Instructions (`AGENTS.md`)
-> **Notice:** This project inherits user persona, confirmation gates, and documentation blueprints from the global master `AGENTS.md`. Do not duplicate those rules here.
+> **Notice:** This project inherits user persona, confirmation gates, visual standards, and documentation blueprints from the global master `AGENTS.md`. Do not duplicate those rules here.
 
 ## 1. Project Tech Stack & Environment
 * **Runtime / Language:** Node.js 18+, TypeScript 5.8 (`strict` + `noUncheckedIndexedAccess`).
@@ -28,15 +28,14 @@
   * `fuzzy.ts` — extension sets, collators, `debounce`, byte/duration formatting, category lookup.
   * `async.ts` — `voidAsync` wrapper for async DOM listeners.
   * `file-service.ts` / `file-check-view.ts` — standalone multi-select view, not registered by the plugin.
-* `docs/` — `PRODUCT.md`, `ARCHITECTURE.md`, `DECISIONS_AND_TRAPS.md`, `VISUAL_GUIDE.html`.
+* `docs/` — Core Markdown documentation suite (`PRODUCT.md`, `ARCHITECTURE.md`, `DECISIONS_AND_TRAPS.md`, `VISUAL_LOG.md`).
+* `preview/` — On-demand interactive HTML/CSS/JS visual previews (e.g., `preview/visual-guide.html`), created only upon explicit request.
 * `runtime/` — frozen plug-and-play bundle (`main.js`, `manifest.json`, `styles.css`) kept as the emergency fallback. Never regenerate into this folder.
 * `main.js` at the root is a generated build artifact; edit `src/` instead.
 
-## 4. Repository-Specific Engineering Traps
-* **TRAP 1:** `runtime/` is a frozen snapshot and is not byte-identical to the newest live vault bundle. Treat `src/` as the evolution target and `runtime/` as a user-facing fallback only.
-* **TRAP 2:** `data.json` keys (`dropdownLists`, `scannedFolders`, `excludedFolders`, `excludedExtensions`, `customAliases`, `defaultViewMode`, `galleryRows`, `galleryColumns`, `glassmorphism`) are user data. Renaming or reshaping one without migration silently discards existing settings.
-* **TRAP 3:** Every `nt-*` class in `styles.css` is coupled to `createEl({ cls })` calls. Renaming one side without the other strips layout or selection styling.
-* **TRAP 4:** `getSelectedFiles()` must stay O(1) per selection via `app.vault.getAbstractFileByPath`; switching back to `getFiles().filter(...)` freezes drag and trash on large vaults.
-* **TRAP 5:** Frontmatter dropdown writes must use `app.fileManager.processFrontMatter`; regex replacement corrupts multiline YAML.
-* **TRAP 6:** `MediaToolboxModal` attaches a `ResizeObserver` and a `nt-gallery-rows-changed` window listener. Both must be removed in `onClose()` or every open leaks handlers.
-* **TRAP 7:** The picker API signature `(chosen, path, payload)` and the `open*Picker(callback, options)` argument order are consumed by external plugins. Do not reorder or rename.
+## 4. Critical Trap Pointers (1-Line Warnings Only)
+* **TRAP 1:** Keep file lookups O(1) via `app.vault.getAbstractFileByPath` rather than scanning arrays — see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: O1-Selection-Lookups]`.
+* **TRAP 2:** Update frontmatter properties atomically via `app.fileManager.processFrontMatter` — see `docs/DECISIONS_AND_TRAPS.md` -> `[DECISION: Atomic-Frontmatter-Updates]`.
+* **TRAP 3:** Preserve persisted `data.json` keys (`dropdownLists`, etc.) with migrations rather than reshaping defaults — see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Data-Json-Key-Shape]`.
+* **TRAP 4:** Remove `ResizeObserver` and window event listeners in `MediaToolboxModal.onClose` — see `docs/DECISIONS_AND_TRAPS.md` -> `[TRAP: Async-DOM-Listeners]`.
+* **TRAP 5:** Preserve the public picker API contract `(chosen, path, payload)` for inter-plugin callers — see `docs/DECISIONS_AND_TRAPS.md` -> `[SUBSYSTEM: Picker-API-Compatibility]`.

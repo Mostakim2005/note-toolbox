@@ -1,7 +1,7 @@
 ﻿{
-	"name": "obsidian-sample-plugin",
+	"name": "note-toolbox",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Modular note toolbox: media browser, lightbox, inline dropdown manager, and bulk file operations.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

@@ -161,17 +161,20 @@ npm run build
 
 ## 4. Extension Recipes
 
-### Add a media category
+### [SUBSYSTEM: Add-A-Media-Category-Recipe] | Aliases: new file category, extensions, media types
+> **1-Line Summary:** How to register new media extensions and expose them in the browser category selector.
 1. Add the extension set to `EXTENSIONS` in `src/fuzzy.ts`.
 2. Return a new `FileCategory` from `getCategory`.
 3. Add the category to `categories` in `MediaToolboxModal.render` and to the extension picker tabs in `src/exclusions.ts`.
 
-### Add a toolbar operation
+### [SUBSYSTEM: Add-A-Toolbar-Operation-Recipe] | Aliases: new toolbar action, batch operation, file manager
+> **1-Line Summary:** How to add new bulk file manipulation buttons to the Media Toolbox toolbar.
 1. Add a button to `opsGroup` in `MediaToolboxModal.render`.
 2. Implement a handler that calls `getSelectedFiles()`.
 3. Use `app.fileManager` for filesystem changes and end with `renderViewport(false)` plus a `Notice`.
 
-### Add a settings key
+### [SUBSYSTEM: Add-A-Settings-Key-Recipe] | Aliases: new preference, data.json, settings tab
+> **1-Line Summary:** How to introduce new persisted settings safely without corrupting default options.
 1. Extend `NoteToolboxSettings` and `DEFAULT_SETTINGS`.
 2. Add the control in `NoteToolboxSettingTab.display`.
 3. Read it from the service or modal; never mutate defaults in place.

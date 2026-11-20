@@ -191,7 +191,7 @@ flowchart LR
 
 ## 3. Verification Contracts
 
-### [VERIFY: Documentation-Header-Contract] | Aliases: docs check, summary line, blueprint
+### [SUBSYSTEM: Documentation-Header-Contract] | Aliases: docs check, summary line, blueprint
 > **1-Line Summary:** Every `### [TYPE: ...]` header must be followed immediately by a `> **1-Line Summary:**` line.
 * **Command:**
 ```bash
@@ -203,7 +203,7 @@ done
 ```
 * **Expected:** equal header and summary counts in all three files.
 
-### [VERIFY: Build-And-Lint-Gate] | Aliases: tsc, eslint, esbuild, main.js
+### [SUBSYSTEM: Build-And-Lint-Gate] | Aliases: tsc, eslint, esbuild, main.js
 > **1-Line Summary:** The port is only complete when typecheck, lint, and production build all exit 0.
 * **Command:**
 ```bash
@@ -214,7 +214,7 @@ ls -l main.js
 ```
 * **Expected:** `TSC_EXIT=0`, `LINT_EXIT=0` (warnings allowed), `BUILD_EXIT=0`, and a fresh root `main.js`.
 
-### [VERIFY: Picker-API-Compatibility] | Aliases: openImagePicker, pickAsset, Practice Engine
+### [SUBSYSTEM: Picker-API-Compatibility] | Aliases: openImagePicker, pickAsset, Practice Engine
 > **1-Line Summary:** External callers depend on callback arity and Promise resolution behavior.
 * **Manual Check:**
   1. Call `openImagePicker((file, path, payload) => ...)` and confirm three arguments.
