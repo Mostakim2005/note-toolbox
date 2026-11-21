@@ -125,6 +125,33 @@ export default class NoteToolboxPlugin extends Plugin {
 		const processor = new InlineDropdownProcessor(this);
 		this.registerMarkdownPostProcessor((el, ctx) => processor.process(el, ctx));
 
+		this.registerEvent(
+			this.app.workspace.on("editor-menu", (menu) => {
+				menu.addItem((item) =>
+					item
+						.setTitle("Note Toolbox: Open Media Toolbox")
+						.setIcon("layout-grid")
+						.onClick(() => new MediaToolboxModal(this.app, this).open()),
+				);
+				menu.addItem((item) =>
+					item
+						.setTitle("Note Toolbox: Manage Inline Dropdowns")
+						.setIcon("list")
+						.onClick(() => new DropdownManagerModal(this.app, this).open()),
+				);
+			}),
+		);
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu) => {
+				menu.addItem((item) =>
+					item
+						.setTitle("Note Toolbox: Open Media Toolbox")
+						.setIcon("layout-grid")
+						.onClick(() => new MediaToolboxModal(this.app, this).open()),
+				);
+			}),
+		);
+
 		this.addSettingTab(new NoteToolboxSettingTab(this.app, this));
 	}
 

@@ -164,3 +164,9 @@
   * `src/main.ts` -> `NoteToolboxPlugin.syncRenamedFolderInSettings`, `NoteToolboxPlugin.onload`
   * `src/media-toolbox.ts` -> `MediaToolboxModal.renderViewport`, `MediaToolboxModal.showContextMenu`
   * `styles.css` -> `.nt-empty-show-all-btn`
+
+### [FEATURE: UI-UX-Parity-And-Accessibility] | Aliases: context menus, editor menu, file menu, focus visible, reduced motion
+> **1-Line Summary:** Adds right-click editor and file context menu integrations for quick actions, responsive mobile styles, and WCAG accessibility compliance.
+* **User Intention (Non-Negotiable):** Integrate Note Toolbox quick utilities directly into Obsidian's native file explorer and editor context menus.
+* **Visual / UI Behavior:** Right-clicking notes or text selections surfaces Note Toolbox actions; focus rings and responsive CSS active across all viewports.
+* **Code Anchors (Grep Targets):** `src/main.ts`, `styles.css`

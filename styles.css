@@ -1656,3 +1656,19 @@ body:not(.nt-glassmorphic) .nt-dropdown-modal {
   padding: 1px 7px;
   border-radius: 10px;
 }
+
+/* === UI/UX Universal Baseline Parity (nt) === */
+@media (max-width: 640px) {
+  .nt-status-pill {
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
