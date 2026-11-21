@@ -1,7 +1,12 @@
 import { PluginSettingTab, Setting, setIcon, setTooltip, type App, type TextAreaComponent } from "obsidian";
 import type NoteToolboxPlugin from "./main";
 import { DropdownManagerUI } from "./dropdown-manager";
-import { ExtensionSelectorModal, FolderSelectorModal } from "./exclusions";
+import {
+	ExtensionSelectorModal,
+	FolderSelectorModal,
+	normalizeExcludedExtensions,
+	normalizeExcludedFolders,
+} from "./exclusions";
 import { voidAsync } from "./async";
 import { debounce } from "./fuzzy";
 
@@ -118,9 +123,10 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 							this.app,
 							this.plugin.settings.excludedFolders || [],
 							async (selected) => {
-								this.plugin.settings.excludedFolders = selected;
+								const normalized = normalizeExcludedFolders(selected);
+								this.plugin.settings.excludedFolders = normalized;
 								await this.plugin.saveSettings();
-								rawFolderInput?.setValue(selected.join(", "));
+								rawFolderInput?.setValue(normalized.join(", "));
 								renderFolderChips();
 							},
 						).open();
@@ -141,9 +147,9 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 			}
 
 			list.forEach((folderPath, idx) => {
-				const chip = chipsContainer.createDiv({ cls: "nt-folder-chip" });
+				const chip = chipsContainer.createDiv({ cls: "nt-folder-chip nt-exclude-chip" });
 				const icon = chip.createSpan();
-				setIcon(icon, "folder");
+				setIcon(icon, "folder-x");
 				chip.createSpan({ text: folderPath });
 
 				const delBtn = chip.createSpan({ cls: "nt-folder-chip-del" });
@@ -174,10 +180,7 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 					.setPlaceholder("e.g. Hardware Planner/data, templates, .trash")
 					.setValue((this.plugin.settings.excludedFolders || []).join(", "))
 					.onChange(async (val) => {
-						this.plugin.settings.excludedFolders = val
-							.split(",")
-							.map((f) => f.trim())
-							.filter(Boolean);
+						this.plugin.settings.excludedFolders = normalizeExcludedFolders(val.split(","));
 						await this.plugin.saveSettings();
 						renderFolderChips();
 					});
@@ -199,9 +202,10 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 							this.app,
 							this.plugin.settings.excludedExtensions || [],
 							async (selected) => {
-								this.plugin.settings.excludedExtensions = selected;
+								const normalized = normalizeExcludedExtensions(selected);
+								this.plugin.settings.excludedExtensions = normalized;
 								await this.plugin.saveSettings();
-								rawExtInput?.setValue(selected.join(", "));
+								rawExtInput?.setValue(normalized.join(", "));
 								renderExtChips();
 							},
 						).open();
@@ -222,9 +226,9 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 			}
 
 			list.forEach((ext, idx) => {
-				const chip = extChipsContainer.createDiv({ cls: "nt-folder-chip" });
+				const chip = extChipsContainer.createDiv({ cls: "nt-folder-chip nt-exclude-chip" });
 				const icon = chip.createSpan();
-				setIcon(icon, "file");
+				setIcon(icon, "file-x");
 				chip.createSpan({ text: `.${ext}` });
 
 				const delBtn = chip.createSpan({ cls: "nt-folder-chip-del" });
@@ -253,10 +257,9 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 					.setPlaceholder("e.g. csv, txt, json, bak")
 					.setValue((this.plugin.settings.excludedExtensions || []).join(", "))
 					.onChange(async (val) => {
-						this.plugin.settings.excludedExtensions = val
-							.split(",")
-							.map((f) => f.trim().toLowerCase().replace(/^\./, ""))
-							.filter(Boolean);
+						this.plugin.settings.excludedExtensions = normalizeExcludedExtensions(
+							val.split(","),
+						);
 						await this.plugin.saveSettings();
 						renderExtChips();
 					});

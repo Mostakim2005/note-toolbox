@@ -101,6 +101,10 @@ export class MediaToolboxModal extends Modal {
 	private folderSelect?: HTMLSelectElement;
 	private extSelect?: HTMLSelectElement;
 	private sortSelect?: HTMLSelectElement;
+	private excludeToggleBtn?: HTMLButtonElement;
+	private excludeTextEl?: HTMLElement;
+	private manageExclusionsBtn?: HTMLButtonElement;
+	private manageExtBtn?: HTMLButtonElement;
 	private viewportWrapper!: HTMLElement;
 	private viewportContainer!: HTMLElement;
 	private scrollTopBtn?: HTMLButtonElement;
@@ -385,35 +389,26 @@ export class MediaToolboxModal extends Modal {
 		});
 
 		const excludeToggleBtn = filterRight.createEl("button", {
-			cls: `nt-btn-sm ${this.hideExcluded ? "is-active" : ""}`,
+			cls: `nt-btn-sm nt-exclude-toggle ${this.hideExcluded ? "is-active" : ""}`,
 		});
 		setIcon(excludeToggleBtn.createSpan({ cls: "nt-btn-icon" }), "filter");
 		const excludeText = excludeToggleBtn.createSpan({
 			text: this.hideExcluded ? "Exclusions On" : "Show All",
 		});
-		setTooltip(
-			excludeToggleBtn,
-			this.hideExcluded
-				? "Excluded folders/extensions are hidden. Click to show all."
-				: "Showing all files. Click to hide excluded.",
-		);
+		this.excludeToggleBtn = excludeToggleBtn;
+		this.excludeTextEl = excludeText;
 		excludeToggleBtn.addEventListener("click", () => {
 			this.hideExcluded = !this.hideExcluded;
-			excludeToggleBtn.toggleClass("is-active", this.hideExcluded);
-			excludeText.setText(this.hideExcluded ? "Exclusions On" : "Show All");
-			setTooltip(
-				excludeToggleBtn,
-				this.hideExcluded
-					? "Excluded folders/extensions are hidden. Click to show all."
-					: "Showing all files. Click to hide excluded.",
-			);
+			this.updateExclusionControls();
 			this.updateExtensionOptions();
 			this.renderViewport(true);
 		});
 
-		const manageExclusionsBtn = filterRight.createEl("button", { cls: "nt-icon-btn" });
+		const manageExclusionsBtn = filterRight.createEl("button", {
+			cls: "nt-icon-btn nt-exclude-icon-btn",
+		});
+		this.manageExclusionsBtn = manageExclusionsBtn;
 		setIcon(manageExclusionsBtn, "folder-cog");
-		setTooltip(manageExclusionsBtn, "Browse & select excluded folders graphically");
 		manageExclusionsBtn.addEventListener("click", () => {
 			new FolderSelectorModal(
 				this.app,
@@ -421,6 +416,7 @@ export class MediaToolboxModal extends Modal {
 				async (selected) => {
 					this.plugin.settings.excludedFolders = selected;
 					await this.plugin.saveSettings();
+					this.updateExclusionControls();
 					this.updateExtensionOptions();
 					this.renderViewport(true);
 					new Notice(`Updated excluded folders (${selected.length} excluded).`);
@@ -428,9 +424,11 @@ export class MediaToolboxModal extends Modal {
 			).open();
 		});
 
-		const manageExtBtn = filterRight.createEl("button", { cls: "nt-icon-btn" });
+		const manageExtBtn = filterRight.createEl("button", {
+			cls: "nt-icon-btn nt-exclude-icon-btn",
+		});
+		this.manageExtBtn = manageExtBtn;
 		setIcon(manageExtBtn, "file-cog");
-		setTooltip(manageExtBtn, "Browse & select excluded file extensions graphically");
 		manageExtBtn.addEventListener("click", () => {
 			new ExtensionSelectorModal(
 				this.app,
@@ -438,12 +436,15 @@ export class MediaToolboxModal extends Modal {
 				async (selected) => {
 					this.plugin.settings.excludedExtensions = selected;
 					await this.plugin.saveSettings();
+					this.updateExclusionControls();
 					this.updateExtensionOptions();
 					this.renderViewport(true);
 					new Notice(`Updated excluded extensions (${selected.length} excluded).`);
 				},
 			).open();
 		});
+
+		this.updateExclusionControls();
 
 		resetBtn.addEventListener("click", () => {
 			search.value = "";
@@ -456,8 +457,7 @@ export class MediaToolboxModal extends Modal {
 			this.sortMode = "mtime-desc";
 			if (this.sortSelect) this.sortSelect.value = "mtime-desc";
 			this.hideExcluded = true;
-			excludeToggleBtn.addClass("is-active");
-			excludeText.setText("Exclusions On");
+			this.updateExclusionControls();
 			this.updateExtensionOptions();
 			this.renderViewport(true);
 		});
@@ -589,6 +589,49 @@ export class MediaToolboxModal extends Modal {
 			});
 			if (opt) opt.selected = ext === currentExt;
 		});
+	}
+
+	private updateExclusionControls(): void {
+		const folderCount = (this.plugin.settings.excludedFolders || []).length;
+		const extCount = (this.plugin.settings.excludedExtensions || []).length;
+		const totalCount = folderCount + extCount;
+
+		if (this.excludeToggleBtn) {
+			this.excludeToggleBtn.toggleClass("is-active", this.hideExcluded);
+			setTooltip(
+				this.excludeToggleBtn,
+				this.hideExcluded
+					? `Exclusions active (${folderCount} folders, ${extCount} extensions hidden). Click to show all.`
+					: "Showing all files (exclusions bypassed). Click to hide excluded.",
+			);
+		}
+		if (this.excludeTextEl) {
+			this.excludeTextEl.setText(
+				this.hideExcluded
+					? totalCount > 0
+						? `Exclusions On (${totalCount})`
+						: "Exclusions On"
+					: "Show All",
+			);
+		}
+		if (this.manageExclusionsBtn) {
+			this.manageExclusionsBtn.toggleClass("has-exclusions", folderCount > 0);
+			setTooltip(
+				this.manageExclusionsBtn,
+				folderCount > 0
+					? `Excluded folders (${folderCount} active) â€” click to manage`
+					: "Browse & select excluded folders graphically",
+			);
+		}
+		if (this.manageExtBtn) {
+			this.manageExtBtn.toggleClass("has-exclusions", extCount > 0);
+			setTooltip(
+				this.manageExtBtn,
+				extCount > 0
+					? `Excluded extensions (${extCount} active) â€” click to manage`
+					: "Browse & select excluded file extensions graphically",
+			);
+		}
 	}
 
 	private updateSelectionState(): void {

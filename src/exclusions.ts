@@ -10,13 +10,123 @@ interface ExtensionRow {
 	count: number;
 }
 
+interface ExclusionModalShellOptions {
+	contentEl: HTMLElement;
+	title: string;
+	initialCount: number;
+	description: string;
+	searchPlaceholder: string;
+	onClose: () => void;
+	onSelectAll: () => void;
+	onClearAll: () => void;
+	onInvert: () => void;
+	onSearch: (value: string) => void;
+	onConfirm: () => void;
+}
+
+interface ExclusionModalShell {
+	badgeEl: HTMLElement;
+	confirmBtn: HTMLButtonElement;
+	bodyAnchor: HTMLElement;
+	updateCount: (count: number) => void;
+}
+
+/** Trim, strip trailing slashes, and deduplicate excluded folder paths (case-insensitively). */
+export function normalizeExcludedFolders(folders: readonly string[] | null | undefined): string[] {
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const raw of folders ?? []) {
+		const cleaned = raw.trim().replace(/^\/+|\/+$/g, "");
+		if (!cleaned) continue;
+		const key = cleaned.toLowerCase();
+		if (seen.has(key)) continue;
+		seen.add(key);
+		result.push(cleaned);
+	}
+	return result;
+}
+
+/** Trim, lowercase, strip leading dots, and deduplicate excluded file extensions. */
+export function normalizeExcludedExtensions(
+	extensions: readonly string[] | null | undefined,
+): string[] {
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const raw of extensions ?? []) {
+		const cleaned = raw.trim().toLowerCase().replace(/^\.+/, "");
+		if (!cleaned || seen.has(cleaned)) continue;
+		seen.add(cleaned);
+		result.push(cleaned);
+	}
+	return result;
+}
+
+function buildExclusionModalShell(opts: ExclusionModalShellOptions): ExclusionModalShell {
+	const { contentEl } = opts;
+	contentEl.empty();
+
+	const topBar = contentEl.createDiv({ cls: "nt-topbar" });
+	const titleGroup = topBar.createDiv({ cls: "nt-title-group" });
+	titleGroup.createEl("h2", { text: opts.title });
+	const badgeEl = titleGroup.createSpan({
+		cls: "nt-badge-count",
+		text: `${opts.initialCount} excluded`,
+	});
+
+	const closeBtn = topBar.createEl("button", { cls: "nt-icon-btn" });
+	setIcon(closeBtn, "x");
+	closeBtn.addEventListener("click", opts.onClose);
+
+	contentEl.createEl("p", {
+		cls: "nt-muted",
+		text: opts.description,
+	});
+
+	const searchRow = contentEl.createDiv({ cls: "nt-filter-row" });
+	const searchInput = searchRow.createEl("input", {
+		type: "search",
+		placeholder: opts.searchPlaceholder,
+		cls: "nt-search-input",
+	});
+	searchInput.addEventListener("input", () => opts.onSearch(searchInput.value));
+
+	const quickGroup = searchRow.createDiv({ cls: "nt-btn-group" });
+	quickGroup
+		.createEl("button", { text: "Select All", cls: "nt-btn-sm" })
+		.addEventListener("click", opts.onSelectAll);
+	quickGroup
+		.createEl("button", { text: "Clear All", cls: "nt-btn-sm" })
+		.addEventListener("click", opts.onClearAll);
+	quickGroup
+		.createEl("button", { text: "Invert", cls: "nt-btn-sm" })
+		.addEventListener("click", opts.onInvert);
+
+	const bodyAnchor = contentEl.createDiv({ cls: "nt-exclusion-body-anchor" });
+
+	const footer = contentEl.createDiv({ cls: "nt-modal-actions" });
+	footer.createEl("button", { text: "Cancel" }).addEventListener("click", opts.onClose);
+
+	const confirmBtn = footer.createEl("button", {
+		text: `Apply Exclusions (${opts.initialCount})`,
+		cls: "nt-exclude-cta",
+	});
+	confirmBtn.addEventListener("click", opts.onConfirm);
+
+	const updateCount = (count: number): void => {
+		badgeEl.setText(`${count} excluded`);
+		confirmBtn.setText(`Apply Exclusions (${count})`);
+	};
+
+	return { badgeEl, confirmBtn, bodyAnchor, updateCount };
+}
+
 /** Visual multi-select picker for excluded vault folders. */
 export class FolderSelectorModal extends Modal {
 	private readonly selectedFolders: Set<string>;
 	private searchQuery = "";
 	private allFolders: string[] = [];
-	private badgeEl!: HTMLElement;
-	private confirmBtn!: HTMLButtonElement;
+	private folderAssetCounts = new Map<string, number>();
+	private shell!: ExclusionModalShell;
 	private listContainer!: HTMLElement;
 
 	constructor(
@@ -25,61 +135,11 @@ export class FolderSelectorModal extends Modal {
 		private readonly onSave: (folders: string[]) => void | Promise<void>,
 	) {
 		super(app);
-		this.selectedFolders = new Set(currentExcludedFolders || []);
+		this.selectedFolders = new Set(normalizeExcludedFolders(currentExcludedFolders));
 		this.modalEl.addClass("nt-folder-picker-modal");
 	}
 
 	onOpen(): void {
-		const { contentEl } = this;
-		contentEl.empty();
-
-		const topBar = contentEl.createDiv({ cls: "nt-topbar" });
-		const titleGroup = topBar.createDiv({ cls: "nt-title-group" });
-		titleGroup.createEl("h2", { text: "Select Folders to Exclude" });
-		this.badgeEl = titleGroup.createSpan({
-			cls: "nt-badge-count",
-			text: `${this.selectedFolders.size} selected`,
-		});
-
-		const closeBtn = topBar.createEl("button", { cls: "nt-icon-btn" });
-		setIcon(closeBtn, "x");
-		closeBtn.addEventListener("click", () => this.close());
-
-		contentEl.createEl("p", {
-			cls: "nt-muted",
-			text: "Navigate or search through vault folders. Checked folders will be completely excluded from Note Toolbox.",
-		});
-
-		const searchRow = contentEl.createDiv({ cls: "nt-filter-row" });
-		const searchInput = searchRow.createEl("input", {
-			type: "search",
-			placeholder: "Filter folders by name or path...",
-			cls: "nt-search-input",
-		});
-
-		const quickGroup = searchRow.createDiv({ cls: "nt-btn-group" });
-		quickGroup.createEl("button", { text: "Select All", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			const list = this.getFilteredFolders();
-			list.forEach((f) => this.selectedFolders.add(f));
-			this.updateBadge();
-			this.renderList();
-		});
-		quickGroup.createEl("button", { text: "Clear All", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			const list = this.getFilteredFolders();
-			list.forEach((f) => this.selectedFolders.delete(f));
-			this.updateBadge();
-			this.renderList();
-		});
-		quickGroup.createEl("button", { text: "Invert", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			const list = this.getFilteredFolders();
-			list.forEach((f) => {
-				if (this.selectedFolders.has(f)) this.selectedFolders.delete(f);
-				else this.selectedFolders.add(f);
-			});
-			this.updateBadge();
-			this.renderList();
-		});
-
 		this.allFolders = [];
 		const collect = (item: unknown): void => {
 			if (item instanceof TFolder) {
@@ -90,25 +150,58 @@ export class FolderSelectorModal extends Modal {
 		collect(this.app.vault.getRoot());
 		this.allFolders.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
-		this.listContainer = contentEl.createDiv({ cls: "nt-folder-list-container" });
+		// Precompute recursive media asset counts per folder once.
+		this.folderAssetCounts.clear();
+		for (const file of this.app.vault.getFiles()) {
+			if (!getCategory(file)) continue;
+			let parent = file.parent;
+			while (parent && parent.path && parent.path !== "/") {
+				this.folderAssetCounts.set(
+					parent.path,
+					(this.folderAssetCounts.get(parent.path) ?? 0) + 1,
+				);
+				parent = parent.parent;
+			}
+		}
+
+		this.shell = buildExclusionModalShell({
+			contentEl: this.contentEl,
+			title: "Select Folders to Exclude",
+			initialCount: this.selectedFolders.size,
+			description:
+				"Navigate or search vault folders. Excluding a folder automatically excludes all of its subfolders.",
+			searchPlaceholder: "Filter folders by name or path...",
+			onClose: () => this.close(),
+			onSelectAll: () => {
+				this.getFilteredFolders().forEach((f) => this.selectedFolders.add(f));
+				this.shell.updateCount(this.selectedFolders.size);
+				this.renderList();
+			},
+			onClearAll: () => {
+				this.getFilteredFolders().forEach((f) => this.selectedFolders.delete(f));
+				this.shell.updateCount(this.selectedFolders.size);
+				this.renderList();
+			},
+			onInvert: () => {
+				this.getFilteredFolders().forEach((f) => {
+					if (this.selectedFolders.has(f)) this.selectedFolders.delete(f);
+					else this.selectedFolders.add(f);
+				});
+				this.shell.updateCount(this.selectedFolders.size);
+				this.renderList();
+			},
+			onSearch: (value) => {
+				this.searchQuery = value.trim().toLowerCase();
+				this.renderList();
+			},
+			onConfirm: () => {
+				this.close();
+				void this.onSave(normalizeExcludedFolders(Array.from(this.selectedFolders)));
+			},
+		});
+
+		this.listContainer = this.shell.bodyAnchor.createDiv({ cls: "nt-folder-list-container" });
 		this.renderList();
-
-		searchInput.addEventListener("input", () => {
-			this.searchQuery = searchInput.value.trim().toLowerCase();
-			this.renderList();
-		});
-
-		const footer = contentEl.createDiv({ cls: "nt-modal-actions" });
-		footer.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.close());
-
-		this.confirmBtn = footer.createEl("button", {
-			text: `Apply Exclusions (${this.selectedFolders.size})`,
-			cls: "mod-cta",
-		});
-		this.confirmBtn.addEventListener("click", () => {
-			this.close();
-			void this.onSave(Array.from(this.selectedFolders));
-		});
 	}
 
 	private getFilteredFolders(): string[] {
@@ -118,11 +211,13 @@ export class FolderSelectorModal extends Modal {
 		);
 	}
 
-	private updateBadge(): void {
-		if (this.badgeEl) this.badgeEl.setText(`${this.selectedFolders.size} selected`);
-		if (this.confirmBtn) {
-			this.confirmBtn.setText(`Apply Exclusions (${this.selectedFolders.size})`);
+	private hasExcludedAncestor(folderPath: string): boolean {
+		const lower = folderPath.toLowerCase();
+		for (const selected of this.selectedFolders) {
+			const selLower = selected.toLowerCase();
+			if (lower.startsWith(`${selLower}/`)) return true;
 		}
+		return false;
 	}
 
 	private renderList(): void {
@@ -135,33 +230,60 @@ export class FolderSelectorModal extends Modal {
 			return;
 		}
 
+		const isSearching = this.searchQuery.length > 0;
+
 		filtered.forEach((folderPath) => {
 			const isSelected = this.selectedFolders.has(folderPath);
-			const row = this.listContainer.createDiv({
-				cls: `nt-folder-row ${isSelected ? "is-selected" : ""}`,
-			});
+			const isInherited = !isSelected && this.hasExcludedAncestor(folderPath);
+			const depth = isSearching ? 0 : Math.min(folderPath.split("/").length - 1, 6);
+
+			const rowClasses = ["nt-folder-row"];
+			if (isSelected) rowClasses.push("is-selected");
+			else if (isInherited) rowClasses.push("is-inherited");
+
+			const row = this.listContainer.createDiv({ cls: rowClasses.join(" ") });
+			if (depth > 0) {
+				row.style.paddingLeft = `${10 + depth * 18}px`;
+			}
 
 			const check = row.createDiv({ cls: "nt-folder-row-checkbox" });
 			if (isSelected) setIcon(check, "check");
+			else if (isInherited) setIcon(check, "minus");
 
 			const icon = row.createDiv({ cls: "nt-folder-icon" });
-			setIcon(icon, isSelected ? "folder-x" : "folder");
+			setIcon(icon, isSelected || isInherited ? "folder-x" : "folder");
 
-			row.createDiv({ cls: "nt-folder-name", text: folderPath });
+			const displayName = isSearching
+				? folderPath
+				: folderPath.split("/").pop() || folderPath;
+			const nameEl = row.createDiv({ cls: "nt-folder-name", text: displayName });
+			if (!isSearching && depth > 0) {
+				nameEl.setAttribute("title", folderPath);
+			}
+
+			if (isInherited) {
+				row.createSpan({ cls: "nt-folder-inherited-tag", text: "via parent" });
+			}
+
+			const assetCount = this.folderAssetCounts.get(folderPath) ?? 0;
+			row.createDiv({
+				cls: "nt-folder-count",
+				text:
+					assetCount === 0
+						? "empty"
+						: assetCount === 1
+							? "1 asset"
+							: `${assetCount} assets`,
+			});
 
 			row.addEventListener("click", () => {
 				if (this.selectedFolders.has(folderPath)) {
 					this.selectedFolders.delete(folderPath);
-					row.removeClass("is-selected");
-					check.empty();
-					setIcon(icon, "folder");
 				} else {
 					this.selectedFolders.add(folderPath);
-					row.addClass("is-selected");
-					setIcon(check, "check");
-					setIcon(icon, "folder-x");
 				}
-				this.updateBadge();
+				this.shell.updateCount(this.selectedFolders.size);
+				this.renderList();
 			});
 		});
 	}
@@ -178,8 +300,7 @@ export class ExtensionSelectorModal extends Modal {
 	private activeCategory = "all";
 	private allExtensions: ExtensionRow[] = [];
 	private catBtns = new Map<string, HTMLButtonElement>();
-	private badgeEl!: HTMLElement;
-	private confirmBtn!: HTMLButtonElement;
+	private shell!: ExclusionModalShell;
 	private listContainer!: HTMLElement;
 
 	constructor(
@@ -188,63 +309,48 @@ export class ExtensionSelectorModal extends Modal {
 		private readonly onSave: (extensions: string[]) => void | Promise<void>,
 	) {
 		super(app);
-		this.selectedExtensions = new Set(
-			(currentExcludedExtensions || []).map((e) =>
-				e.trim().toLowerCase().replace(/^\./, ""),
-			),
-		);
+		this.selectedExtensions = new Set(normalizeExcludedExtensions(currentExcludedExtensions));
 		this.modalEl.addClass("nt-ext-picker-modal");
 	}
 
 	onOpen(): void {
-		const { contentEl } = this;
-		contentEl.empty();
-
-		const topBar = contentEl.createDiv({ cls: "nt-topbar" });
-		const titleGroup = topBar.createDiv({ cls: "nt-title-group" });
-		titleGroup.createEl("h2", { text: "Manage Excluded Extensions" });
-		this.badgeEl = titleGroup.createSpan({
-			cls: "nt-badge-count",
-			text: `${this.selectedExtensions.size} excluded`,
+		this.shell = buildExclusionModalShell({
+			contentEl: this.contentEl,
+			title: "Manage Excluded Extensions",
+			initialCount: this.selectedExtensions.size,
+			description:
+				"Select file extensions you want to hide. Use Select All, Clear All, or Invert for fast batch configuration.",
+			searchPlaceholder: "Filter extensions (e.g. csv, png, mp4)...",
+			onClose: () => this.close(),
+			onSelectAll: () => {
+				this.getFilteredExtensions().forEach((item) => this.selectedExtensions.add(item.ext));
+				this.shell.updateCount(this.selectedExtensions.size);
+				this.renderList();
+			},
+			onClearAll: () => {
+				this.getFilteredExtensions().forEach((item) => this.selectedExtensions.delete(item.ext));
+				this.shell.updateCount(this.selectedExtensions.size);
+				this.renderList();
+			},
+			onInvert: () => {
+				this.getFilteredExtensions().forEach((item) => {
+					if (this.selectedExtensions.has(item.ext)) this.selectedExtensions.delete(item.ext);
+					else this.selectedExtensions.add(item.ext);
+				});
+				this.shell.updateCount(this.selectedExtensions.size);
+				this.renderList();
+			},
+			onSearch: (value) => {
+				this.searchQuery = value.trim().toLowerCase().replace(/^\./, "");
+				this.renderList();
+			},
+			onConfirm: () => {
+				this.close();
+				void this.onSave(normalizeExcludedExtensions(Array.from(this.selectedExtensions)));
+			},
 		});
 
-		const closeBtn = topBar.createEl("button", { cls: "nt-icon-btn" });
-		setIcon(closeBtn, "x");
-		closeBtn.addEventListener("click", () => this.close());
-
-		contentEl.createEl("p", {
-			cls: "nt-muted",
-			text: "Select file extensions you want to hide. Use Select All, Clear All, or Invert for fast batch configuration.",
-		});
-
-		const searchRow = contentEl.createDiv({ cls: "nt-filter-row" });
-		const searchInput = searchRow.createEl("input", {
-			type: "search",
-			placeholder: "Filter extensions (e.g. csv, png, mp4)...",
-			cls: "nt-search-input",
-		});
-
-		const quickGroup = searchRow.createDiv({ cls: "nt-btn-group" });
-		quickGroup.createEl("button", { text: "Select All", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			this.getFilteredExtensions().forEach((item) => this.selectedExtensions.add(item.ext));
-			this.updateBadge();
-			this.renderList();
-		});
-		quickGroup.createEl("button", { text: "Clear All", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			this.getFilteredExtensions().forEach((item) => this.selectedExtensions.delete(item.ext));
-			this.updateBadge();
-			this.renderList();
-		});
-		quickGroup.createEl("button", { text: "Invert", cls: "nt-btn-sm" }).addEventListener("click", () => {
-			this.getFilteredExtensions().forEach((item) => {
-				if (this.selectedExtensions.has(item.ext)) this.selectedExtensions.delete(item.ext);
-				else this.selectedExtensions.add(item.ext);
-			});
-			this.updateBadge();
-			this.renderList();
-		});
-
-		const catRow = contentEl.createDiv({ cls: "nt-chip-group" });
+		const catRow = this.shell.bodyAnchor.createDiv({ cls: "nt-chip-group" });
 		const cats: Array<{ id: string; label: string }> = [
 			{ id: "all", label: "All Types" },
 			{ id: "image", label: "Images" },
@@ -290,34 +396,8 @@ export class ExtensionSelectorModal extends Modal {
 			return a.ext.localeCompare(b.ext);
 		});
 
-		this.listContainer = contentEl.createDiv({ cls: "nt-ext-list-container" });
+		this.listContainer = this.shell.bodyAnchor.createDiv({ cls: "nt-ext-list-container" });
 		this.renderList();
-
-		searchInput.addEventListener("input", () => {
-			this.searchQuery = searchInput.value.trim().toLowerCase().replace(/^\./, "");
-			this.renderList();
-		});
-
-		const footer = contentEl.createDiv({ cls: "nt-modal-actions" });
-		footer.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.close());
-
-		this.confirmBtn = footer.createEl("button", {
-			text: `Apply Exclusions (${this.selectedExtensions.size})`,
-			cls: "mod-cta",
-		});
-		this.confirmBtn.addEventListener("click", () => {
-			this.close();
-			void this.onSave(Array.from(this.selectedExtensions));
-		});
-	}
-
-	private updateBadge(): void {
-		if (this.badgeEl) {
-			this.badgeEl.setText(`${this.selectedExtensions.size} excluded`);
-		}
-		if (this.confirmBtn) {
-			this.confirmBtn.setText(`Apply Exclusions (${this.selectedExtensions.size})`);
-		}
 	}
 
 	private getFilteredExtensions(): ExtensionRow[] {
@@ -364,7 +444,7 @@ export class ExtensionSelectorModal extends Modal {
 					row.addClass("is-selected");
 					setIcon(check, "check");
 				}
-				this.updateBadge();
+				this.shell.updateCount(this.selectedExtensions.size);
 			});
 		});
 	}
