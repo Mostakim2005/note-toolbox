@@ -1302,6 +1302,20 @@ body:not(.nt-glassmorphic) .nt-dropdown-modal {
   opacity: 0.45;
 }
 
+.nt-empty-show-all-btn {
+  margin-top: 6px;
+  background: var(--nt-exclude-soft) !important;
+  color: var(--nt-exclude-text) !important;
+  border: 1px solid var(--nt-exclude-border) !important;
+  font-weight: 600;
+}
+
+.nt-empty-show-all-btn:hover {
+  background: var(--nt-exclude) !important;
+  color: #ffffff !important;
+  border-color: var(--nt-exclude) !important;
+}
+
 /* ==========================================================================
    Visual Folder Selector Modal & Folder Chips
    ========================================================================== */

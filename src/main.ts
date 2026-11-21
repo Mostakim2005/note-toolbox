@@ -11,6 +11,7 @@ import { InlineDropdownProcessor } from "./dropdown";
 import { debounce, getCategory } from "./fuzzy";
 import { MediaToolboxModal } from "./media-toolbox";
 import { DropdownManagerModal } from "./dropdown-manager-modal";
+import { normalizeExcludedExtensions, normalizeExcludedFolders } from "./exclusions";
 import { NoteToolboxSettingTab } from "./settings-tab";
 
 /**
@@ -74,6 +75,14 @@ export default class NoteToolboxPlugin extends Plugin {
 		);
 
 		this.registerEvent(
+			this.app.vault.on("create", (file) => {
+				if (file instanceof TFile && file.extension.toLowerCase() === "canvas") {
+					void this.service.refreshCanvasLinks();
+				}
+			}),
+		);
+
+		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
 				if (file instanceof TFile && file.extension.toLowerCase() === "canvas") {
 					void this.service.refreshCanvasLinks();
@@ -86,6 +95,9 @@ export default class NoteToolboxPlugin extends Plugin {
 				this.service.clearLinkedCache();
 				if (file instanceof TFile) {
 					this.service.cache.delete(file.path);
+					if (file.extension.toLowerCase() === "canvas") {
+						void this.service.refreshCanvasLinks();
+					}
 				} else if (file instanceof TFolder) {
 					this.service.purgeFolder(file.path);
 				}
@@ -97,8 +109,15 @@ export default class NoteToolboxPlugin extends Plugin {
 				this.service.clearLinkedCache();
 				if (file instanceof TFolder) {
 					this.service.purgeFolder(oldPath);
+					this.syncRenamedFolderInSettings(oldPath, file.path);
 				} else {
 					this.service.cache.delete(oldPath);
+					if (
+						(file instanceof TFile && file.extension.toLowerCase() === "canvas") ||
+						oldPath.toLowerCase().endsWith(".canvas")
+					) {
+						void this.service.refreshCanvasLinks();
+					}
 				}
 			}),
 		);
@@ -268,11 +287,48 @@ export default class NoteToolboxPlugin extends Plugin {
 		document.querySelectorAll(".nt-canvas-overlay-btn").forEach((el) => el.remove());
 	}
 
+	private syncRenamedFolderInSettings(oldPath: string, newPath: string): void {
+		const normOld = oldPath.trim().replace(/^\/+|\/+$/g, "");
+		const normNew = newPath.trim().replace(/^\/+|\/+$/g, "");
+		if (!normOld || !normNew || normOld === normNew) return;
+		const oldLower = normOld.toLowerCase();
+
+		const remap = (list: string[]): { next: string[]; changed: boolean } => {
+			let changed = false;
+			const mapped = list.map((entry) => {
+				const cleaned = entry.trim().replace(/^\/+|\/+$/g, "");
+				const lower = cleaned.toLowerCase();
+				if (lower === oldLower) {
+					changed = true;
+					return normNew;
+				}
+				if (lower.startsWith(`${oldLower}/`)) {
+					changed = true;
+					return `${normNew}${cleaned.slice(normOld.length)}`;
+				}
+				return entry;
+			});
+			return { next: changed ? normalizeExcludedFolders(mapped) : list, changed };
+		};
+
+		const excludedRes = remap(this.settings.excludedFolders || []);
+		const scannedRes = remap(this.settings.scannedFolders || []);
+		if (excludedRes.changed || scannedRes.changed) {
+			this.settings.excludedFolders = excludedRes.next;
+			this.settings.scannedFolders = scannedRes.next;
+			void this.saveSettings();
+		}
+	}
+
 	async loadSettings(): Promise<void> {
 		const data = (await this.loadData()) as Partial<NoteToolboxSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
-		if (!Array.isArray(this.settings.excludedFolders)) this.settings.excludedFolders = [];
-		if (!Array.isArray(this.settings.excludedExtensions)) this.settings.excludedExtensions = [];
+		this.settings.excludedFolders = Array.isArray(this.settings.excludedFolders)
+			? normalizeExcludedFolders(this.settings.excludedFolders)
+			: [];
+		this.settings.excludedExtensions = Array.isArray(this.settings.excludedExtensions)
+			? normalizeExcludedExtensions(this.settings.excludedExtensions)
+			: [];
 	}
 
 	async saveSettings(): Promise<void> {

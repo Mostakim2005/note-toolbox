@@ -147,3 +147,20 @@
 * **Code Anchors (Grep Targets):**
   * `src/settings-tab.ts` -> `NoteToolboxSettingTab.display`
   * `src/settings.ts` -> `DEFAULT_SETTINGS`
+
+### [FEATURE: Red-Exclusion-Theme-And-Picker-UX] | Aliases: exclusions, folder selector, extension selector, exclusion theme, red badge
+> **1-Line Summary:** Unified red-themed exclusion pickers for folders and file extensions with live counts, search, and batch quick actions.
+* **User Intention (Non-Negotiable):** Setting exclusions must be fast and visually distinct from inclusion filters, with clear badges showing excluded counts and batch Select All / Clear All / Invert actions.
+* **Visual / UI Behavior:** Unified modal header with red badge counter (`nt-badge-count`), live search bar, batch buttons (`Select All`, `Clear All`, `Invert`), and prominent red CTA (`Apply Exclusions (N)`). Folder chips display asset counts for quick recognition.
+* **Code Anchors (Grep Targets):**
+  * `src/exclusions.ts` -> `buildExclusionModalShell`, `FolderSelectorModal`, `ExtensionSelectorModal`
+  * `styles.css` -> `.nt-badge-count`, `.nt-folder-picker-modal`, `.nt-exclude-cta`
+
+### [FEATURE: Exclusion-Robustness-And-Quick-Actions] | Aliases: context menu exclusions, show all button, empty state, folder rename sync
+> **1-Line Summary:** Context-menu toggles for folder/extension exclusion, automatic folder rename remapping, canvas link lifecycle sync, and an empty-state "Show All" reveal button.
+* **User Intention (Non-Negotiable):** Users should be able to toggle exclusions directly from asset right-click menus; renamed vault folders must automatically update saved exclusion lists without orphan rules; and empty states caused by exclusions must provide an immediate one-click "Show All" button to view hidden files.
+* **Visual / UI Behavior:** Asset context menu dynamically shows "Exclude Folder" / "Remove Folder Exclusion" and "Exclude Extension" / "Remove Extension Exclusion". Empty views indicate when files are hidden by active rules with an accented "Show All (N)" button.
+* **Code Anchors (Grep Targets):**
+  * `src/main.ts` -> `NoteToolboxPlugin.syncRenamedFolderInSettings`, `NoteToolboxPlugin.onload`
+  * `src/media-toolbox.ts` -> `MediaToolboxModal.renderViewport`, `MediaToolboxModal.showContextMenu`
+  * `styles.css` -> `.nt-empty-show-all-btn`

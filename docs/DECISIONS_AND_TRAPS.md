@@ -140,6 +140,29 @@ flowchart LR
 * **Code Anchors (Grep Targets):**
   * `src/main.ts` -> `NoteToolboxPlugin.injectOverlayButtons`
 
+### [DECISION: Unified-Exclusion-Modal-Shell-And-Normalization] | Aliases: exclusions, buildExclusionModalShell, normalizeExcludedFolders, normalizeExcludedExtensions
+> **1-Line Summary:** Reusable modal shell and sanitization helpers standardize exclusion counts, search, and batch actions across folders and extensions.
+* **Decision Maker:** `[DECIDED BY: HUMAN]`
+* **Original User Intention:** Modal layouts and string-parsing logic for folder and extension exclusions were divergent, leading to inconsistent styling and case/slash duplication bugs.
+* **Options Considered:**
+  * **Option A (Rejected):** Keep separate, independent modal classes with duplicated header/footer DOM construction and ad-hoc string trimming.
+  * **Option B (Chosen):** Centralize shared topbar, red counter badges, search filter, batch buttons, and footer CTA inside `buildExclusionModalShell`, backed by case-insensitive trimming and deduplication via `normalizeExcludedFolders` and `normalizeExcludedExtensions`.
+* **Visual Pivot Map (What Failed vs. What Works):**
+```mermaid
+flowchart LR
+    subgraph Failed["❌ Old Approach (Failed)"]
+        A1["Separate modal DOM logic"] --> A2["Inconsistent search & styling"]
+        A3["Ad-hoc path strings"] --> A4["Duplicate/casing filter bugs"]
+    end
+    subgraph Active["✅ Current Approach (Works)"]
+        B1["buildExclusionModalShell"] --> B2["Uniform red badge & batch buttons"]
+        B3["normalizeExcluded*"] --> B4["Sanitized, deduplicated rules"]
+    end
+```
+* **Code Anchors (Grep Targets):**
+  * `src/exclusions.ts` -> `buildExclusionModalShell`, `normalizeExcludedFolders`, `normalizeExcludedExtensions`
+  * `styles.css` -> `.nt-badge-count`, `.nt-exclude-cta`
+
 ## 2. Landmines & Traps
 
 ### [TRAP: Command-Alias-Re-Registration] | Aliases: duplicate commands, registerAliases, settings change
@@ -188,6 +211,21 @@ flowchart LR
 * **Code Anchors (Grep Targets):**
   * `src/main.ts` -> `NoteToolboxPlugin.onload`
   * `src/media.ts` -> `MediaService.clearLinkedCache`, `MediaService.purgeFolder`
+
+### [TRAP: Stale-Excluded-Folder-Paths-On-Vault-Rename] | Aliases: rename folder, syncRenamedFolderInSettings, orphan rules
+> **1-Line Summary:** Renaming a folder in the Obsidian vault leaves orphaned paths in exclusion/scanned settings unless remapped dynamically.
+* **What Breaks:** Renamed folders lose their excluded status, suddenly displaying unwanted assets in the media browser.
+* **Safe Change:** Listen to vault folder renames and invoke `syncRenamedFolderInSettings(oldPath, newPath)` to remap both exact folder paths and nested subpaths in settings.
+* **Code Anchors (Grep Targets):**
+  * `src/main.ts` -> `NoteToolboxPlugin.syncRenamedFolderInSettings`, `NoteToolboxPlugin.onload`
+
+### [TRAP: Empty-View-Exclusion-Invisibility] | Aliases: hiddenByExclusions, show all button, empty state
+> **1-Line Summary:** When all assets matching a query are hidden by active exclusions, users may assume assets were deleted or scanning failed.
+* **What Breaks:** User confusion over zero search results when exclusions silently suppress all candidates.
+* **Safe Change:** Query candidate count without exclusion filters; if hidden assets exist, display a prominent message indicating hidden items with an inline `Show All (N)` toggle button (`.nt-empty-show-all-btn`).
+* **Code Anchors (Grep Targets):**
+  * `src/media-toolbox.ts` -> `MediaToolboxModal.renderViewport`
+  * `styles.css` -> `.nt-empty-show-all-btn`
 
 ## 3. Verification Contracts
 

@@ -24,7 +24,12 @@ import type {
 } from "./types";
 import { debounce, getCategory, getExtensions } from "./fuzzy";
 import { ConfirmModal, InputPromptModal, SelectFolderModal } from "./modals";
-import { ExtensionSelectorModal, FolderSelectorModal } from "./exclusions";
+import {
+	ExtensionSelectorModal,
+	FolderSelectorModal,
+	normalizeExcludedExtensions,
+	normalizeExcludedFolders,
+} from "./exclusions";
 import { QuickLookModal } from "./quick-look";
 import { DropdownManagerModal } from "./dropdown-manager-modal";
 import { voidAsync } from "./async";
@@ -683,10 +688,45 @@ export class MediaToolboxModal extends Modal {
 			const empty = this.viewportContainer.createDiv({ cls: "nt-empty" });
 			const emptyIcon = empty.createDiv({ cls: "nt-empty-icon" });
 			setIcon(emptyIcon, "search-x");
-			empty.createEl("strong", { text: "No matching assets found" });
-			empty.createSpan({
-				text: "Try adjusting search query, filters, or extension exclusion rules.",
-			});
+
+			const hiddenByExclusions = this.hideExcluded
+				? this.service.getValidFiles(
+						this.category,
+						this.selectedFolder,
+						this.searchQuery,
+						this.sortMode,
+						this.usageFilter,
+						this.selectedExtension,
+						false,
+						false,
+						this.pickerAllowedExtensions,
+						this.pickerExcludedExtensions,
+						this.pickerExcludedFolders,
+						true,
+					).length
+				: 0;
+
+			if (hiddenByExclusions > 0) {
+				empty.createEl("strong", { text: "No visible assets found" });
+				empty.createSpan({
+					text: `${hiddenByExclusions} matching ${hiddenByExclusions === 1 ? "asset is" : "assets are"} hidden by active exclusions.`,
+				});
+				const showAllBtn = empty.createEl("button", {
+					cls: "nt-btn-sm nt-empty-show-all-btn",
+					text: `Show All (${hiddenByExclusions})`,
+				});
+				showAllBtn.addEventListener("click", () => {
+					this.hideExcluded = false;
+					this.updateExclusionControls();
+					this.updateExtensionOptions();
+					this.renderViewport(true);
+				});
+			} else {
+				empty.createEl("strong", { text: "No matching assets found" });
+				empty.createSpan({
+					text: "Try adjusting search query, filters, or exclusion rules.",
+				});
+			}
 			return;
 		}
 
@@ -1177,25 +1217,42 @@ export class MediaToolboxModal extends Modal {
 
 		if (file.parent && file.parent.path !== "/") {
 			const parentPath = file.parent.path;
+			const parentName = file.parent?.name ?? parentPath;
+			const currentFolders = normalizeExcludedFolders(this.plugin.settings.excludedFolders);
+			const isDirectlyExcluded = currentFolders.some(
+				(f) => f.toLowerCase() === parentPath.toLowerCase(),
+			);
+
 			menu.addItem((item) => {
 				item
-					.setTitle(`Exclude Folder "${file.parent?.name ?? parentPath}"`)
-					.setIcon("folder-minus")
+					.setTitle(
+						isDirectlyExcluded
+							? `Remove Folder Exclusion "${parentName}"`
+							: `Exclude Folder "${parentName}"`,
+					)
+					.setIcon(isDirectlyExcluded ? "folder-check" : "folder-x")
 					.onClick(async () => {
-						const ex = this.plugin.settings.excludedFolders || [];
-						if (!ex.includes(parentPath)) {
-							ex.push(parentPath);
-							this.plugin.settings.excludedFolders = ex;
-							await this.plugin.saveSettings();
-							new Notice(`Excluded folder "${parentPath}".`);
-							this.renderViewport(true);
-						}
+						const next = isDirectlyExcluded
+							? currentFolders.filter(
+									(f) => f.toLowerCase() !== parentPath.toLowerCase(),
+								)
+							: normalizeExcludedFolders([...currentFolders, parentPath]);
+						this.plugin.settings.excludedFolders = next;
+						await this.plugin.saveSettings();
+						this.updateExclusionControls();
+						this.updateExtensionOptions();
+						this.renderViewport(true);
+						new Notice(
+							isDirectlyExcluded
+								? `Removed exclusion for "${parentPath}".`
+								: `Excluded folder "${parentPath}".`,
+						);
 					});
 			});
 
 			menu.addItem((item) => {
 				item
-					.setTitle(`Focus Folder "${file.parent?.name ?? parentPath}" Only`)
+					.setTitle(`Focus Folder "${parentName}" Only`)
 					.setIcon("folder")
 					.onClick(() => {
 						this.selectedFolder = parentPath;
@@ -1206,21 +1263,31 @@ export class MediaToolboxModal extends Modal {
 			});
 		}
 
+		const fileExt = file.extension.toLowerCase();
+		const currentExts = normalizeExcludedExtensions(this.plugin.settings.excludedExtensions);
+		const isExtExcluded = currentExts.includes(fileExt);
 		menu.addItem((item) => {
 			item
-				.setTitle(`Exclude Extension (.${file.extension.toLowerCase()})`)
-				.setIcon("file-minus")
+				.setTitle(
+					isExtExcluded
+						? `Remove Extension Exclusion (.${fileExt})`
+						: `Exclude Extension (.${fileExt})`,
+				)
+				.setIcon(isExtExcluded ? "file-check" : "file-x")
 				.onClick(async () => {
-					const ext = file.extension.toLowerCase();
-					const ex = this.plugin.settings.excludedExtensions || [];
-					if (!ex.includes(ext)) {
-						ex.push(ext);
-						this.plugin.settings.excludedExtensions = ex;
-						await this.plugin.saveSettings();
-						new Notice(`Excluded .${ext} files.`);
-						this.updateExtensionOptions();
-						this.renderViewport(true);
-					}
+					const next = isExtExcluded
+						? currentExts.filter((e) => e !== fileExt)
+						: normalizeExcludedExtensions([...currentExts, fileExt]);
+					this.plugin.settings.excludedExtensions = next;
+					await this.plugin.saveSettings();
+					this.updateExclusionControls();
+					this.updateExtensionOptions();
+					this.renderViewport(true);
+					new Notice(
+						isExtExcluded
+							? `Removed exclusion for .${fileExt} files.`
+							: `Excluded .${fileExt} files.`,
+					);
 				});
 		});
 
@@ -1235,6 +1302,7 @@ export class MediaToolboxModal extends Modal {
 						async (selected) => {
 							this.plugin.settings.excludedFolders = selected;
 							await this.plugin.saveSettings();
+							this.updateExclusionControls();
 							this.updateExtensionOptions();
 							this.renderViewport(true);
 							new Notice(`Updated excluded folders (${selected.length} excluded).`);
@@ -1254,6 +1322,7 @@ export class MediaToolboxModal extends Modal {
 						async (selected) => {
 							this.plugin.settings.excludedExtensions = selected;
 							await this.plugin.saveSettings();
+							this.updateExclusionControls();
 							this.updateExtensionOptions();
 							this.renderViewport(true);
 							new Notice(`Updated excluded extensions (${selected.length} excluded).`);

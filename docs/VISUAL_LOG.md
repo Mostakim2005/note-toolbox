@@ -89,3 +89,58 @@ flowchart TD
   * `src/dropdown.ts` -> `InlineDropdownProcessor`
   * `src/dropdown-manager.ts` -> `DropdownManager.updateList`
   * `src/main.ts` -> `registerMarkdownPostProcessor`
+
+---
+
+### [VISUAL: Exclusion-Management-And-Lifecycle-Flow] | Aliases: exclusions flow, red badge, modal shell, rename sync, show all
+> **1-Line Summary:** How exclusion pickers standardize modal UI, normalize folder/extension paths, handle vault folder renames, and expose quick-toggle actions.
+
+* **Plain-English Walkthrough:** Note Toolbox manages exclusions through both visual pickers and file context menus. In the visual modals (`FolderSelectorModal` and `ExtensionSelectorModal`), `buildExclusionModalShell` constructs a unified red-themed header with live excluded counts, search filtering, and batch actions (Select All / Clear All / Invert). Saved inputs are sanitized and deduplicated case-insensitively via `normalizeExcludedFolders` and `normalizeExcludedExtensions`. When a vault folder is renamed, `syncRenamedFolderInSettings` automatically remaps affected rules so exclusion coverage remains intact. In the media browser, context menus allow toggling folder/extension rules on the fly, and empty views offer a "Show All" button to temporarily view assets hidden by active exclusions.
+
+```mermaid
+flowchart TD
+    %% Color Definitions (Obsidian & GitHub compatible)
+    classDef startNode fill:#1d4ed8,stroke:#1e3a8a,color:#ffffff
+    classDef processNode fill:#0f766e,stroke:#115e59,color:#ffffff
+    classDef outputNode fill:#15803d,stroke:#14532d,color:#ffffff
+    classDef trapNode fill:#b91c1c,stroke:#7f1d1d,color:#ffffff
+
+    Entry([User Triggers Exclusion Action]):::startNode --> ActionType{Entry Mode?}:::processNode
+
+    ActionType -->|Settings or Toolbar Button| OpenModal[buildExclusionModalShell: Render Unified Modal]:::processNode
+    ActionType -->|Card Context Menu| ToggleMenu[Show 'Exclude Folder/Extension' Menu Item]:::processNode
+    ActionType -->|Vault Folder Renamed| FolderRename[Vault rename event fired]:::processNode
+
+    OpenModal --> UserFilter[Search query or batch Select All/Clear/Invert]:::processNode
+    UserFilter --> LiveBadge[Update badge count and Apply button label]:::processNode
+    LiveBadge --> ConfirmRules[Click Apply Exclusions]:::processNode
+
+    ToggleMenu --> QuickToggle[Toggle rule in settings array]:::processNode
+
+    FolderRename --> RemapCheck[syncRenamedFolderInSettings: Check path match]:::processNode
+    RemapCheck --> RemapPaths[Remap exact and subfolder paths in settings]:::processNode
+
+    ConfirmRules --> Sanitize[normalizeExcludedFolders / normalizeExcludedExtensions]:::processNode
+    QuickToggle --> Sanitize
+    RemapPaths --> Sanitize
+
+    Sanitize --> SaveState[Save settings to data.json]:::processNode
+    SaveState --> RefreshUI[Refresh exclusion controls, chips, and viewport]:::processNode
+
+    RefreshUI --> EmptyCheck{Zero assets visible in view?}:::processNode
+    EmptyCheck -->|Hidden by exclusions| ShowEmptyAll[Display 'No visible assets' + Show All button]:::trapNode
+    EmptyCheck -->|Standard assets present| DoneDisplay([Media Browser View Rendered]):::outputNode
+    ShowEmptyAll -->|Click Show All| RevealHidden([Temporarily disable hideExcluded]):::outputNode
+
+    subgraph Legend["Legend (Color Guide)"]
+        L1([Blue = User Action or Event Entry Point]):::startNode
+        L2[Teal = Processing & Transformation Step]:::processNode
+        L3([Green = Successful Final Outcome]):::outputNode
+        L4[Red = Exclusion Filter & Suppression State]:::trapNode
+    end
+```
+
+* **Code Anchors (Grep Targets):**
+  * `src/exclusions.ts` -> `buildExclusionModalShell`, `normalizeExcludedFolders`, `normalizeExcludedExtensions`
+  * `src/main.ts` -> `NoteToolboxPlugin.syncRenamedFolderInSettings`
+  * `src/media-toolbox.ts` -> `MediaToolboxModal.showContextMenu`, `MediaToolboxModal.renderViewport`

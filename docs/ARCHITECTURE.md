@@ -112,11 +112,13 @@ sequenceDiagram
   * `src/main.ts` -> `NoteToolboxPlugin.injectOverlayButtons`
 
 ### [SUBSYSTEM: Exclusion-And-Settings] | Aliases: folder picker, extension picker, chips, settings
-> **1-Line Summary:** Exclusion pickers edit the same settings arrays that the browser reads, and the settings tab mirrors them as removable chips and raw text.
-* **How It Works (Plain English):** Folder and extension modals keep local selection sets, offer filtered Select All/Clear/Invert, and hand the final array back through `onSave`. The settings tab re-renders chips after every change and keeps the textarea in sync. Both feed `settings.excludedFolders` / `excludedExtensions`, which `getValidFiles` applies before any display.
+> **1-Line Summary:** Standardized red-themed exclusion pickers and normalization helpers edit settings arrays that the browser and context menus read.
+* **How It Works (Plain English):** `buildExclusionModalShell` standardizes modal headers, red count badges, search inputs, and batch action buttons (`Select All`, `Clear All`, `Invert`). Folder paths and extensions are sanitized and deduplicated case-insensitively via `normalizeExcludedFolders` and `normalizeExcludedExtensions`. The settings tab mirrors them as removable chips, the media browser context menu allows toggling exclusions directly from file cards, and empty views offer a "Show All" toggle when exclusions hide matching assets.
 * **Code Anchors (Grep Targets):**
-  * `src/exclusions.ts` -> `FolderSelectorModal`, `ExtensionSelectorModal`
+  * `src/exclusions.ts` -> `buildExclusionModalShell`, `FolderSelectorModal`, `ExtensionSelectorModal`, `normalizeExcludedFolders`, `normalizeExcludedExtensions`
   * `src/settings-tab.ts` -> `NoteToolboxSettingTab.display` (`renderFolderChips`, `renderExtChips`)
+  * `src/media-toolbox.ts` -> `MediaToolboxModal.showContextMenu`, `MediaToolboxModal.renderViewport`
+  * `styles.css` -> `.nt-badge-count`, `.nt-empty-show-all-btn`
 
 ### [SUBSYSTEM: Inline-Dropdown-Pipeline] | Aliases: post-processor, frontmatter, ?[list], inline select
 > **1-Line Summary:** A Markdown post-processor replaces `?[list]` text nodes with selects and writes changes atomically.
@@ -139,11 +141,11 @@ sequenceDiagram
   * `src/main.ts` -> `NoteToolboxPlugin.openPicker`, `pickFile`, `pickAsset`, `createAssetPayload`
   * `src/types.ts` -> `ChooserOptions`, `AssetPayload`, `PickerConfig`
 
-### [SUBSYSTEM: Lifecycle-And-Overlays] | Aliases: onload, events, canvas button, unload
-> **1-Line Summary:** The entry point registers commands, aliases, ribbon, workspace overlays, cache invalidation, and teardown.
-* **How It Works (Plain English):** `onload` loads settings, applies the glassmorphism class, creates `MediaService`, registers two commands and aliases, injects a ribbon icon, and wires layout-change events to a debounced overlay injector. Vault delete/rename and metadata resolved events clear caches. `onunload` removes the body class and every injected overlay button.
+### [SUBSYSTEM: Lifecycle-And-Overlays] | Aliases: onload, events, canvas button, unload, folder rename sync
+> **1-Line Summary:** The entry point registers commands, aliases, ribbon, workspace overlays, cache invalidation, canvas link sync, and folder rename remapping.
+* **How It Works (Plain English):** `onload` loads settings, applies the glassmorphism class, creates `MediaService`, registers commands and aliases, injects a ribbon icon, and wires layout-change events to a debounced overlay injector. Vault delete/rename and metadata resolved events clear caches, refresh Canvas links on `.canvas` changes, and automatically remap renamed folders in `settings.excludedFolders` and `settings.scannedFolders` via `syncRenamedFolderInSettings`. `onunload` removes the body class and every injected overlay button.
 * **Code Anchors (Grep Targets):**
-  * `src/main.ts` -> `NoteToolboxPlugin.onload`, `NoteToolboxPlugin.onunload`, `NoteToolboxPlugin.registerAliases`
+  * `src/main.ts` -> `NoteToolboxPlugin.onload`, `NoteToolboxPlugin.onunload`, `NoteToolboxPlugin.syncRenamedFolderInSettings`, `NoteToolboxPlugin.registerAliases`
 
 ### [SUBSYSTEM: Build-And-Persistence] | Aliases: esbuild, data.json, manifest, release
 > **1-Line Summary:** One esbuild command bundles `src/main.ts` to root `main.js`; settings persist under stable `data.json` keys.
