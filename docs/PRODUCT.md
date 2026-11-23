@@ -170,3 +170,13 @@
 * **User Intention (Non-Negotiable):** Integrate Note Toolbox quick utilities directly into Obsidian's native file explorer and editor context menus.
 * **Visual / UI Behavior:** Right-clicking notes or text selections surfaces Note Toolbox actions; focus rings and responsive CSS active across all viewports.
 * **Code Anchors (Grep Targets):** `src/main.ts`, `styles.css`
+
+
+### [FEATURE: Visual-Note-Navigator-And-Grid] | Aliases: notebook navigator, note grid, dual pane browser, note previews, multi-image cards
+> **1-Line Summary:** Zero-dependency dual-pane / single-pane visual note browser with Gallery Grid (up to 3 image thumbnails per note), Apple Notes-style Visual Preview list, Compact list, folder/tag trees, shortcuts, date/folder grouping, pinning, and lazy preview caching.
+* **User Intention (Non-Negotiable):** Preview note titles, cleaned text excerpts, embedded/cover images, tags, and task progress without opening notes — while keeping Obsidian startup cost at 0 ms (all preview extraction happens lazily only when the view is opened).
+* **Visual / UI Behavior:** Dual-pane or single-pane layout toggle, 3 display modes (Gallery Grid with 1–3 image mosaic strips, Visual Preview rows with thumbnails, Compact list), Shortcuts (`All Notes`, `Pinned`, `Recent 7d`, `With Images`), Folder/Tag tree, Search, Sort/Group controls, `+ New Note`, keyboard navigation, and context menu.
+* **Code Anchors (Grep Targets):**
+  * `src/note-preview-cache.ts` -> `NotePreviewCache.getQuickMetadata`, `NotePreviewCache.getPreview`
+  * `src/note-navigator-view.ts` -> `NoteNavigatorView`, `VIEW_TYPE_NOTE_NAVIGATOR`
+  * `src/main.ts` -> `NoteToolboxPlugin.activateNoteNavigator`

@@ -285,6 +285,101 @@ export class NoteToolboxSettingTab extends PluginSettingTab {
 					});
 			});
 
+		new Setting(containerEl).setName("Visual Note Navigator & Grid").setHeading();
+
+		new Setting(containerEl)
+			.setName("Default navigator layout")
+			.setDesc("Choose dual-pane (tree + previews side by side) or single-pane (compact sidebar).")
+			.addDropdown((dd) => {
+				dd.addOption("dual", "Dual-pane (Folder/Tag tree + Notes)")
+					.addOption("single", "Single-pane (Toggle between Tree and Notes)")
+					.setValue(this.plugin.settings.navLayoutMode || "dual")
+					.onChange(async (val) => {
+						this.plugin.settings.navLayoutMode = val === "single" ? "single" : "dual";
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("Default note display style")
+			.setDesc("Browse notes as a visual Gallery Grid, Apple Notes-style Preview List, or Compact List.")
+			.addDropdown((dd) => {
+				dd.addOption("grid", "Gallery Grid (Title, excerpt & up to 3 images)")
+					.addOption("preview", "Visual Preview List (Excerpt + thumbnail)")
+					.addOption("compact", "Compact List (Dense titles & dates)")
+					.setValue(this.plugin.settings.navDisplayMode || "preview")
+					.onChange(async (val) => {
+						this.plugin.settings.navDisplayMode =
+							val === "grid" || val === "compact" ? val : "preview";
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("Note preview excerpt lines")
+			.setDesc("How many lines of text excerpt to display per note card or preview row (1–5).")
+			.addDropdown((dd) => {
+				for (const n of ["1", "2", "3", "4", "5"]) dd.addOption(n, `${n} line${n === "1" ? "" : "s"}`);
+				dd.setValue(String(this.plugin.settings.navPreviewLines || 3)).onChange(
+					async (val) => {
+						this.plugin.settings.navPreviewLines = Number(val) || 3;
+						await this.plugin.saveSettings();
+					},
+				);
+			});
+
+		new Setting(containerEl)
+			.setName("Note grid columns")
+			.setDesc("Choose Auto-fit responsive cards or pin a fixed number of grid columns (2–5).")
+			.addDropdown((dd) => {
+				dd.addOption("0", "Auto-fit (Responsive)")
+					.addOption("2", "2 columns")
+					.addOption("3", "3 columns")
+					.addOption("4", "4 columns")
+					.addOption("5", "5 columns")
+					.setValue(String(this.plugin.settings.navGridColumns || 0))
+					.onChange(async (val) => {
+						this.plugin.settings.navGridColumns = Number(val) || 0;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("Show note image thumbnails")
+			.setDesc("Display embedded vault images and frontmatter cover thumbnails without opening notes.")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.navShowThumbnails !== false).onChange(
+					async (val) => {
+						this.plugin.settings.navShowThumbnails = val;
+						await this.plugin.saveSettings();
+					},
+				);
+			});
+
+		new Setting(containerEl)
+			.setName("Show tag pills on note cards")
+			.setDesc("Display clickable tag pills inside Visual Preview and Gallery Grid cards.")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.navShowTags !== false).onChange(
+					async (val) => {
+						this.plugin.settings.navShowTags = val;
+						await this.plugin.saveSettings();
+					},
+				);
+			});
+
+		new Setting(containerEl)
+			.setName("Auto-reveal active note")
+			.setDesc("Automatically highlight and scroll to the active note when switching tabs.")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.navAutoReveal !== false).onChange(
+					async (val) => {
+						this.plugin.settings.navAutoReveal = val;
+						await this.plugin.saveSettings();
+					},
+				);
+			});
+
 		new Setting(containerEl).setName("Interactive Inline Dropdown Manager").setHeading();
 		containerEl.createEl("p", {
 			text: "Manage your ?[listname] dropdowns visually. Use ?[listname] to bind to note properties, or ?[listname|CurrentValue] for multiple independent dropdowns in a note.",

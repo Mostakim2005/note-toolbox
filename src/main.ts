@@ -12,15 +12,18 @@ import { debounce, getCategory } from "./fuzzy";
 import { MediaToolboxModal } from "./media-toolbox";
 import { DropdownManagerModal } from "./dropdown-manager-modal";
 import { normalizeExcludedExtensions, normalizeExcludedFolders } from "./exclusions";
+import { NoteNavigatorView, VIEW_TYPE_NOTE_NAVIGATOR } from "./note-navigator-view";
+import { NotePreviewCache } from "./note-preview-cache";
 import { NoteToolboxSettingTab } from "./settings-tab";
 
 /**
- * NoteToolboxPlugin — lifecycle, commands, overlays, and the inter-plugin
+ * NoteToolboxPlugin — lifecycle, commands, overlays, visual note navigator, and the inter-plugin
  * chooser API. Faithful entry port of Nihon main.js L3216+.
  */
 export default class NoteToolboxPlugin extends Plugin {
 	settings: NoteToolboxSettings = Object.assign({}, DEFAULT_SETTINGS);
 	service!: MediaService;
+	notePreviewCache!: NotePreviewCache;
 	private settingsReady: Promise<void> = Promise.resolve();
 	private registeredAliasIds = new Set<string>();
 
@@ -36,9 +39,31 @@ export default class NoteToolboxPlugin extends Plugin {
 	onload(): void {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS);
 		this.service = new MediaService(this.app, this.settings);
+		this.notePreviewCache = new NotePreviewCache(this.app);
 		this.settingsReady = this.loadSettings().then(() => {
 			this.applyThemePreferences();
 			this.registerAliases();
+		});
+
+		this.registerView(
+			VIEW_TYPE_NOTE_NAVIGATOR,
+			(leaf) => new NoteNavigatorView(leaf, this),
+		);
+
+		this.addCommand({
+			id: "open-note-navigator",
+			name: "Open Visual Note Navigator & Grid",
+			callback: () => {
+				void this.activateNoteNavigator("tab");
+			},
+		});
+
+		this.addCommand({
+			id: "open-note-navigator-sidebar",
+			name: "Open Visual Note Navigator in Sidebar",
+			callback: () => {
+				void this.activateNoteNavigator("left");
+			},
 		});
 
 		this.addCommand({
@@ -65,6 +90,10 @@ export default class NoteToolboxPlugin extends Plugin {
 			void this.settingsReady.then(() => {
 				new MediaToolboxModal(this.app, this).open();
 			});
+		});
+
+		this.addRibbonIcon("layout-panel-left", "Open Visual Note Navigator & Grid", () => {
+			void this.activateNoteNavigator("tab");
 		});
 
 		const debouncedInject = debounce(() => this.injectOverlayButtons(), 150);
@@ -94,8 +123,11 @@ export default class NoteToolboxPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
-				if (file instanceof TFile && file.extension.toLowerCase() === "canvas") {
-					void this.service.refreshCanvasLinks();
+				if (file instanceof TFile) {
+					this.notePreviewCache.invalidate(file.path);
+					if (file.extension.toLowerCase() === "canvas") {
+						void this.service.refreshCanvasLinks();
+					}
 				}
 			}),
 		);
@@ -105,6 +137,7 @@ export default class NoteToolboxPlugin extends Plugin {
 				this.service.clearLinkedCache();
 				if (file instanceof TFile) {
 					this.service.cache.delete(file.path);
+					this.notePreviewCache.invalidate(file.path);
 					if (file.extension.toLowerCase() === "canvas") {
 						void this.service.refreshCanvasLinks();
 					}
@@ -117,11 +150,15 @@ export default class NoteToolboxPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("rename", (file, oldPath) => {
 				this.service.clearLinkedCache();
+				this.notePreviewCache.invalidate(oldPath);
 				if (file instanceof TFolder) {
 					this.service.purgeFolder(oldPath);
 					this.syncRenamedFolderInSettings(oldPath, file.path);
 				} else {
 					this.service.cache.delete(oldPath);
+					if (file instanceof TFile) {
+						this.notePreviewCache.invalidate(file.path);
+					}
 					if (
 						(file instanceof TFile && file.extension.toLowerCase() === "canvas") ||
 						oldPath.toLowerCase().endsWith(".canvas")
@@ -163,6 +200,21 @@ export default class NoteToolboxPlugin extends Plugin {
 		);
 
 		this.addSettingTab(new NoteToolboxSettingTab(this.app, this));
+	}
+
+	async activateNoteNavigator(target: "tab" | "left" = "tab"): Promise<void> {
+		await this.settingsReady;
+		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NOTE_NAVIGATOR);
+		if (existing.length > 0 && existing[0]) {
+			this.app.workspace.setActiveLeaf(existing[0], { focus: true });
+			return;
+		}
+		const leaf =
+			target === "left"
+				? this.app.workspace.getLeftLeaf(false) ?? this.app.workspace.getLeaf("tab")
+				: this.app.workspace.getLeaf("tab");
+		await leaf.setViewState({ type: VIEW_TYPE_NOTE_NAVIGATOR, active: true });
+		this.app.workspace.setActiveLeaf(leaf, { focus: true });
 	}
 
 	createAssetPayload(target: TFile): AssetPayload;

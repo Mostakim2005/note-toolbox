@@ -267,3 +267,9 @@ ls -l main.js
 * **Decision Maker:** `[DECIDED BY: HUMAN]`
 * **Protected Code Anchors (Grep Targets):** `src/main.ts` -> `onload`, `settingsReady`
 
+
+
+### [DECISION: Lean-Visual-Note-Navigator-Inside-Note-Toolbox] | Aliases: notebook navigator replacement, lazy note preview cache, note grid
+> **1-Line Summary:** Built a pure-TypeScript dual-pane/single-pane Visual Note Navigator & Gallery Grid directly inside Note Toolbox instead of running the 3.00 MB React/IndexedDB Notebook Navigator plugin, keeping startup work at zero via on-demand `mtime`-keyed `NotePreviewCache`.
+* **Decision Maker:** `[DECIDED BY: HUMAN]`
+* **Protected Code Anchors (Grep Targets):** `src/note-preview-cache.ts` -> `NotePreviewCache`, `src/note-navigator-view.ts` -> `NoteNavigatorView`

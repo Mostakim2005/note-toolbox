@@ -1,5 +1,10 @@
 import type { TFile } from "obsidian";
 
+export type NavLayoutMode = "dual" | "single";
+export type NavDisplayMode = "grid" | "preview" | "compact";
+export type NavSortMode = "mtime-desc" | "mtime-asc" | "ctime-desc" | "name-asc" | "name-desc";
+export type NavGroupMode = "none" | "date" | "folder";
+
 export interface NoteToolboxSettings {
 	dropdownLists: Record<string, string[]>;
 	scannedFolders: string[];
@@ -10,6 +15,16 @@ export interface NoteToolboxSettings {
 	galleryRows: number;
 	galleryColumns: number;
 	glassmorphism: boolean;
+	navLayoutMode: NavLayoutMode;
+	navDisplayMode: NavDisplayMode;
+	navSortMode: NavSortMode;
+	navGroupMode: NavGroupMode;
+	navPreviewLines: number;
+	navShowThumbnails: boolean;
+	navShowTags: boolean;
+	navAutoReveal: boolean;
+	navGridColumns: number;
+	navPinnedNotes: string[];
 }
 
 export type FileCategory = "image" | "video" | "audio" | "document";
