@@ -261,3 +261,9 @@ ls -l main.js
 * **Code Anchors (Grep Targets):**
   * `src/main.ts` -> `NoteToolboxPlugin.openImagePicker`, `pickFile`, `pickAsset`
   * `src/media-toolbox.ts` -> `MediaToolboxModal.resolvePicker`, `onClose`
+
+### [DECISION: Non-Blocking-Startup-Hydration] | Aliases: startup latency, non-blocking onload, deferred settings
+> **1-Line Summary:** Hydrated settings asynchronously via settingsReady (mutating 	his.settings in place for MediaService) and deferred injectOverlayButtons() to onLayoutReady.
+* **Decision Maker:** `[DECIDED BY: HUMAN]`
+* **Protected Code Anchors (Grep Targets):** `src/main.ts` -> `onload`, `settingsReady`
+

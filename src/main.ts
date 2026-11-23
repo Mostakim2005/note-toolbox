@@ -19,8 +19,9 @@ import { NoteToolboxSettingTab } from "./settings-tab";
  * chooser API. Faithful entry port of Nihon main.js L3216+.
  */
 export default class NoteToolboxPlugin extends Plugin {
-	settings!: NoteToolboxSettings;
+	settings: NoteToolboxSettings = Object.assign({}, DEFAULT_SETTINGS);
 	service!: MediaService;
+	private settingsReady: Promise<void> = Promise.resolve();
 	private registeredAliasIds = new Set<string>();
 
 	applyThemePreferences(): void {
@@ -32,16 +33,21 @@ export default class NoteToolboxPlugin extends Plugin {
 		}
 	}
 
-	async onload(): Promise<void> {
-		await this.loadSettings();
-		this.applyThemePreferences();
+	onload(): void {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS);
 		this.service = new MediaService(this.app, this.settings);
+		this.settingsReady = this.loadSettings().then(() => {
+			this.applyThemePreferences();
+			this.registerAliases();
+		});
 
 		this.addCommand({
 			id: "open-media-toolbox",
 			name: "Open Media Toolbox",
 			callback: () => {
-				new MediaToolboxModal(this.app, this).open();
+				void this.settingsReady.then(() => {
+					new MediaToolboxModal(this.app, this).open();
+				});
 			},
 		});
 
@@ -49,23 +55,27 @@ export default class NoteToolboxPlugin extends Plugin {
 			id: "open-dropdown-manager",
 			name: "Manage Inline Dropdowns",
 			callback: () => {
-				new DropdownManagerModal(this.app, this).open();
+				void this.settingsReady.then(() => {
+					new DropdownManagerModal(this.app, this).open();
+				});
 			},
 		});
 
-		this.registerAliases();
-
 		this.addRibbonIcon("layout-grid", "Open Media Toolbox", () => {
-			new MediaToolboxModal(this.app, this).open();
+			void this.settingsReady.then(() => {
+				new MediaToolboxModal(this.app, this).open();
+			});
 		});
 
 		const debouncedInject = debounce(() => this.injectOverlayButtons(), 150);
 		this.registerEvent(this.app.workspace.on("layout-change", debouncedInject));
 		this.registerEvent(this.app.workspace.on("active-leaf-change", debouncedInject));
-		this.injectOverlayButtons();
 
 		this.app.workspace.onLayoutReady(() => {
-			void this.service.refreshCanvasLinks();
+			void this.settingsReady.then(() => {
+				this.injectOverlayButtons();
+				void this.service.refreshCanvasLinks();
+			});
 		});
 
 		this.registerEvent(
@@ -349,7 +359,7 @@ export default class NoteToolboxPlugin extends Plugin {
 
 	async loadSettings(): Promise<void> {
 		const data = (await this.loadData()) as Partial<NoteToolboxSettings> | null;
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+		Object.assign(this.settings, DEFAULT_SETTINGS, data);
 		this.settings.excludedFolders = Array.isArray(this.settings.excludedFolders)
 			? normalizeExcludedFolders(this.settings.excludedFolders)
 			: [];
@@ -359,6 +369,7 @@ export default class NoteToolboxPlugin extends Plugin {
 	}
 
 	async saveSettings(): Promise<void> {
+		await this.settingsReady;
 		await this.saveData(this.settings);
 	}
 }
